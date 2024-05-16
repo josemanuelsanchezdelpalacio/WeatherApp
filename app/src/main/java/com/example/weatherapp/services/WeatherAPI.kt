@@ -1,24 +1,32 @@
 package com.example.weatherapp.services
 
+import com.example.weatherapp.data.WeatherResponse
 import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
 import retrofit2.Retrofit
-import retrofit2.http.Body
+import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.GET
-import retrofit2.http.POST
+import retrofit2.http.Query
 
-interface RetrofitService {
-    @GET("posts")
-    suspend fun getPosts(): List <Post>
+interface WeatherAPI {
+    @GET("weather")
+    suspend fun getCurrentWeather(
+        @Query("q") city: String,
+        @Query("appid") apiKey: String,
+        @Query("units") units: String = "metric"
+    ): WeatherResponse
 }
 
-object RetrofitServiceFactory {
-    fun makeRetrofitService(): RetrofitService {
-        return Retrofit
-            .Builder()
-            .baseUrl("https://private-f73aae-jmsdam2.apiary-mock.com/")
-            .addConverterFactory(Json.asConverterFactory("application/json".toMediaType()))
-            .build().create(RetrofitService::class.java)
+object RetrofitInstance {
+    private val retrofit by lazy {
+        Retrofit.Builder()
+            .baseUrl("https://api.openweathermap.org/data/2.5/")
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+    }
+
+    val api: WeatherAPI by lazy {
+        retrofit.create(WeatherAPI::class.java)
     }
 }

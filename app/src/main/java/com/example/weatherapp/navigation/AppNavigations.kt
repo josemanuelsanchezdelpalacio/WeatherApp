@@ -1,24 +1,16 @@
-package com.dam2jms.factoriaproyectosfp24retrofit.navigation
+package com.example.weatherapp.navigation
 
 import androidx.compose.runtime.Composable
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.dam2jms.factoriaproyectosfp24retrofit.models.ViewModelLogin
-import com.dam2jms.factoriaproyectosfp24retrofit.models.ViewModelHome
-import com.dam2jms.factoriaproyectosfp24retrofit.models.ViewModelRegister
-import com.dam2jms.factoriaproyectosfp24retrofit.screens.AñadirProyecto
-import com.dam2jms.factoriaproyectosfp24retrofit.screens.HomeScreen
-import com.dam2jms.factoriaproyectosfp24retrofit.screens.LoginScreen
-import com.dam2jms.factoriaproyectosfp24retrofit.screens.RegisterScreen
+import com.example.weatherapp.models.ViewModel
+import com.example.weatherapp.screens.WeatherScreen
 
 @Composable
 fun appNavigation() {
     val navController = rememberNavController()
-    NavHost(navController = navController, startDestination = AppScreens.LoginScreen.route) {
-        composable(route = AppScreens.LoginScreen.route) { LoginScreen(navController, mvvm = ViewModelLogin()) }
-        composable(route = AppScreens.RegisterScreen.route) { RegisterScreen(navController, mvvm = ViewModelRegister()) }
-        composable(route = AppScreens.HomeScreen.route) { HomeScreen(navController, mvvm = ViewModelHome()) }
-        composable(route = AppScreens.AñadirProyecto.route) {AñadirProyecto(navController, mvvm = ViewModelHome())}
+    NavHost(navController = navController, startDestination = AppScreens.WeatherScreen.route) {
+        composable(route = AppScreens.WeatherScreen.route) { WeatherScreen(navController, mvvm = ViewModel()) }
     }
 }

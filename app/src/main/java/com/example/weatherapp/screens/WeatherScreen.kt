@@ -1,4 +1,4 @@
-package com.example.numbermind.screens
+package com.example.weatherapp.screens
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -56,41 +56,33 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import com.example.numbermind.models.ViewModelJuego
-import com.example.numbermind.states.UiState
+import com.example.weatherapp.models.ViewModel
 
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun GameScreen(navController: NavController, mvvm: ViewModelJuego) {
-
-    val uiState by mvvm.uiState.collectAsState()
+fun WeatherScreen(navController: NavController, mvvm: ViewModel) {
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(text = "NUMBERMIND") },
+                title = { Text(text = "WEATHER") },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(Icons.Filled.ArrowBack, contentDescription = null)
                     }
-                },
-                actions = {
-                    Text(text = "Intento ${uiState.intentosAnteriores.size + 1}/10")
                 }
             )
         }
     ) { paddingValues ->
-        GameBodyScreen(modifier = Modifier.padding(paddingValues), mvvm, uiState)
+        WeatherBodyScreen(modifier = Modifier.padding(paddingValues), mvvm)
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun GameBodyScreen(modifier: Modifier, mvvm: ViewModelJuego, uiState: UiState) {
-    var mostrarAlertDialog by rememberSaveable { mutableStateOf(false) }
-    val context = LocalContext.current
-
+fun WeatherBodyScreen(modifier: Modifier, mvvm: ViewModel) {
+    val weather by mvvm.weather.collectAsState()
 
     Spacer(modifier = Modifier.height(16.dp))
     Column(
@@ -100,130 +92,10 @@ fun GameBodyScreen(modifier: Modifier, mvvm: ViewModelJuego, uiState: UiState) {
             .verticalScroll(rememberScrollState())
             .background(Color.White)
     ) {
-        Spacer(modifier = Modifier.height(16.dp))
+        weather?.let {
+            Text("Temperatura: ${it.main.temp}ºC")
+            Text("Descripcion: ${it.weather[0].description}")
 
-        //edittext para que el usuario introduzca el numero
-        OutlinedTextField(
-            value = uiState.numeroJugador,
-            onValueChange = { mvvm.changedNumero(it.take(4)) },
-            label = { Text("Introduce un número de 4 cifras") },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-            modifier = Modifier
-                .fillMaxWidth()
-                .align(Alignment.CenterHorizontally)
-        )
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.Center,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Button(
-                onClick = {
-                    mvvm.comprobarNumero(uiState.numeroJugador, context)
-                },
-                colors = ButtonDefaults.buttonColors(Color.Blue, contentColor = Color.White)
-            ) {
-                Text("Comprobar número")
-            }
-
-            Spacer(modifier = Modifier.width(16.dp))
-
-            Button(
-                onClick = {
-                    mvvm.reiniciarJuego()
-                },
-                colors = ButtonDefaults.buttonColors(Color.Red, contentColor = Color.White)
-            ) {
-                Text("Reiniciar")
-            }
         }
-
-        Text("Número secreto: ${uiState.numeroSecreto}")
-        Spacer(modifier = Modifier.height(16.dp))
-
-        //creo un lazycolumn con un card donde ira apareciendo la informacion de los intentos
-        LazyColumn(
-            modifier = Modifier
-                .weight(1f)
-                .fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-            contentPadding = PaddingValues(horizontal = 16.dp)
-        ) {
-            items(uiState.intentosAnteriores.reversed()) { intento ->
-                Card(
-                    shape = RoundedCornerShape(20.dp),
-                    elevation = CardDefaults.cardElevation(
-                        defaultElevation = 10.dp
-                    ),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Row(
-                        modifier = Modifier.padding(16.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text(
-                            "Intento ${intento.numeroIntento}: ${intento.numeroJugador}",
-                            style = MaterialTheme.typography.bodyLarge,
-                            fontWeight = FontWeight.Bold,
-                            modifier = Modifier.weight(1f)
-                        )
-
-                        val matrizCirculos = mvvm.generarMatrizCirculos(intento)
-
-                        Column(
-                            modifier = Modifier.weight(1f),
-                            horizontalAlignment = Alignment.End
-                        ) {
-                            //recorro dos veces para crear las dos filas
-                            for (i in 0 until 2) {
-                                Row {
-                                    //recorro dos veces para crear dos circulos
-                                    for (j in 0 until 2) {
-                                        val index = 2 * i + j
-
-                                        //pongo su color dependiendo de su valor
-                                        val color = when (matrizCirculos[index]) {
-                                            0 -> Color.Black // bien colocados
-                                            1 -> Color.Gray // mal colocados
-                                            else -> Color.White // no existe
-                                        }
-
-                                        //dibujo un circulo con el color asignado
-                                        Canvas(modifier = Modifier
-                                            .size(32.dp)
-                                            .padding(4.dp)) {
-                                            drawCircle(color)
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    // Mover la lógica de mostrar el AlertDialog aquí
-    if (uiState.intentosAnteriores.isNotEmpty() && uiState.intentosAnteriores.last().bienColocados == 4) {
-        mostrarAlertDialog = true
-    } else if (uiState.intentosAnteriores.size >= 10) {
-        mostrarAlertDialog = true
-    }
-
-    if (mostrarAlertDialog) {
-        AlertDialog(
-            text = { Text(text = uiState.resultado) },
-            onDismissRequest = { mostrarAlertDialog = false },
-            confirmButton = {
-                TextButton(onClick = {
-                    mvvm.reiniciarJuego()
-                    mostrarAlertDialog = false
-                }) { Text(text = "Reiniciar") }
-            })
     }
 }

@@ -8,9 +8,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
-class ViewModelJuego : ViewModel() {
+class ViewModel : ViewModel() {
     private val _weather = MutableStateFlow<WeatherResponse?>(null)
-    val uiState: StateFlow<WeatherResponse?> = _weather
+    val weather: StateFlow<WeatherResponse?> = _weather
 
     init{
         fetchWeather("Jaca")
