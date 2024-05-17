@@ -8,6 +8,7 @@ import androidx.core.app.ActivityCompat
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.weatherapp.data.DailyForecast
 import com.example.weatherapp.data.Forecast
 import com.example.weatherapp.data.WeatherResponse
 import com.example.weatherapp.services.RetrofitInstance
@@ -15,6 +16,8 @@ import com.google.android.gms.location.LocationServices
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import java.util.Calendar
+import java.util.Date
 
 class ViewModel(application: Application) : AndroidViewModel(application) {
     private val _weather = MutableStateFlow<WeatherResponse?>(null)
@@ -65,4 +68,48 @@ class ViewModel(application: Application) : AndroidViewModel(application) {
             }
         }
     }
+
+    // Función para obtener el nombre del día de la semana a partir de una fecha
+    fun getDayOfWeekName(date: Date): String {
+        val calendar = Calendar.getInstance()
+        calendar.time = date
+        val dayOfWeek = calendar.get(Calendar.DAY_OF_WEEK)
+        val dayOfWeekNames = arrayOf("Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado")
+        return dayOfWeekNames[dayOfWeek - 1]
+    }
+
+    // Función para obtener las previsiones y temperaturas por día a partir de la lista de previsiones
+    fun getDailyForecasts(forecasts: List<Forecast>): List<DailyForecast> {
+        val today = Calendar.getInstance()
+        val dailyForecasts = mutableListOf<DailyForecast>()
+
+        // Obtener el día siguiente a hoy
+        today.add(Calendar.DAY_OF_YEAR, 1)
+
+        // Iterar por cada día de la semana
+        repeat(7) {
+            // Filtrar las previsiones para el día actual
+            val dayForecasts = forecasts.filter { forecast ->
+                val forecastDate = Calendar.getInstance()
+                forecastDate.timeInMillis = forecast.dt * 1000
+                forecastDate.get(Calendar.DAY_OF_YEAR) == today.get(Calendar.DAY_OF_YEAR)
+            }
+
+            // Si hay previsiones para el día actual, calcular la temperatura promedio
+            val avgTemp = if (dayForecasts.isNotEmpty()) {
+                dayForecasts.map { it.main.temp }.average().toFloat()
+            } else {
+                Float.NaN
+            }
+
+            // Agregar la previsiones y temperaturas por día a la lista
+            dailyForecasts.add(DailyForecast(getDayOfWeekName(today.time), avgTemp))
+
+            // Mover al siguiente día
+            today.add(Calendar.DAY_OF_YEAR, 1)
+        }
+
+        return dailyForecasts
+    }
+
 }

@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -60,6 +61,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import coil.compose.rememberImagePainter
 import com.example.weatherapp.data.Forecast
@@ -107,7 +109,6 @@ fun WeatherScreen(navController: NavController, mvvm: ViewModel) {
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun WeatherBodyScreen(
     modifier: Modifier,
@@ -123,39 +124,65 @@ fun WeatherBodyScreen(
             .background(Color.White)
     ) {
         weather?.let {
-            Card(modifier = Modifier.padding(vertical = 8.dp)) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text("Descripción: ${it.weather[0].description}")
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp)
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp)
+                ) {
+                    Text(
+                        text = "Descripción: ${it.weather[0].description}",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold
+                    )
                     Text("Temperatura: ${it.main.temp}ºC")
                     Text("Sensación térmica: ${it.main.feels_like}ºC")
                     Text("Probabilidad de lluvia: ${it.rain?.oneHour ?: 0}%")
                     Image(
                         painter = rememberImagePainter(data = "https://openweathermap.org/img/w/${it.weather[0].icon}.png"),
-                        contentDescription = "Weather icon"
+                        contentDescription = "Weather icon",
+                        modifier = Modifier.size(100.dp)
                     )
                 }
             }
 
             // Hourly forecast card
-            Card(modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text(text = "Temperaturas por horas", style = MaterialTheme.typography.bodyLarge)
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp)
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp)
+                ) {
+                    Text(
+                        text = "Temperaturas por horas",
+                        style = MaterialTheme.typography.bodySmall,
+                        fontWeight = FontWeight.Bold
+                    )
                     Spacer(modifier = Modifier.height(8.dp))
                     hourlyForecast?.let { forecasts ->
-                        Row(
-                            modifier = Modifier.horizontalScroll(rememberScrollState())
-                        ) {
-                            forecasts.take(24).forEach { forecast ->
+                        LazyRow {
+                            items(forecasts.take(24)) { forecast ->
                                 Column(
                                     horizontalAlignment = Alignment.CenterHorizontally,
                                     modifier = Modifier.padding(horizontal = 8.dp)
                                 ) {
-                                    Text(text = "${forecast.main.temp}ºC")
+                                    Text(
+                                        text = "${SimpleDateFormat("HH:mm").format(Date(forecast.dt * 1000))}",
+                                        fontSize = 14.sp
+                                    )
                                     Image(
                                         painter = rememberImagePainter(data = "https://openweathermap.org/img/w/${forecast.weather[0].icon}.png"),
-                                        contentDescription = "Hourly weather icon"
+                                        contentDescription = "Hourly weather icon",
+                                        modifier = Modifier.size(50.dp)
                                     )
-                                    Text(text = "${SimpleDateFormat("HH:mm").format(Date(forecast.dt * 1000))}")
+                                    Text(
+                                        text = "${forecast.main.temp}ºC",
+                                        fontSize = 14.sp
+                                    )
                                 }
                             }
                         }
@@ -164,9 +191,19 @@ fun WeatherBodyScreen(
             }
 
             // Daily forecast card
-            Card(modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text(text = "Previsión por días", style = MaterialTheme.typography.bodyLarge)
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp)
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp)
+                ) {
+                    Text(
+                        text = "Previsión por días",
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.Bold
+                    )
                     Spacer(modifier = Modifier.height(8.dp))
                     dailyForecast?.let { forecasts ->
                         forecasts.take(7).forEach { forecast ->
@@ -176,16 +213,32 @@ fun WeatherBodyScreen(
                                     .padding(vertical = 4.dp),
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
-                                Text(text = SimpleDateFormat("EEE, MMM d").format(Date(forecast.dt * 1000)))
+                                Text(
+                                    text = SimpleDateFormat("EEE, MMM d").format(Date(forecast.dt * 1000)),
+                                    fontSize = 16.sp
+                                )
                                 Image(
                                     painter = rememberImagePainter(data = "https://openweathermap.org/img/w/${forecast.weather[0].icon}.png"),
-                                    contentDescription = "Daily weather icon"
+                                    contentDescription = "Daily weather icon",
+                                    modifier = Modifier.size(50.dp)
                                 )
                                 Column(horizontalAlignment = Alignment.End) {
-                                    Text(text = "Máx: ${forecast.main.temp_max}ºC")
-                                    Text(text = "Mín: ${forecast.main.temp_min}ºC")
-                                    Text(text = "Viento: ${forecast.wind.speed} m/s")
-                                    Text(text = "Lluvia: ${forecast.rain?.oneHour ?: 0}%")
+                                    Text(
+                                        text = "Máx: ${forecast.main.temp_max}ºC",
+                                        fontSize = 14.sp
+                                    )
+                                    Text(
+                                        text = "Mín: ${forecast.main.temp_min}ºC",
+                                        fontSize = 14.sp
+                                    )
+                                    Text(
+                                        text = "Viento: ${forecast.wind.speed} m/s",
+                                        fontSize = 14.sp
+                                    )
+                                    Text(
+                                        text = "Lluvia: ${forecast.rain?.oneHour ?: 0}%",
+                                        fontSize = 14.sp
+                                    )
                                 }
                             }
                         }
@@ -195,4 +248,3 @@ fun WeatherBodyScreen(
         }
     }
 }
-

@@ -43,3 +43,8 @@ data class Forecast(
     val wind: Wind,
     val rain: Rain?
 )
+
+data class DailyForecast(
+    val dayOfWeek: String,
+    val avgTemperature: Float
+)
