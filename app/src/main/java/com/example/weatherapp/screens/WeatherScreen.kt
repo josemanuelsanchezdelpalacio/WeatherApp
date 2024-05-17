@@ -3,6 +3,7 @@ package com.example.weatherapp.screens
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -61,22 +62,29 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import coil.compose.rememberImagePainter
+import com.example.weatherapp.data.Forecast
 import com.example.weatherapp.data.WeatherResponse
 import com.example.weatherapp.models.ViewModel
+import java.text.SimpleDateFormat
+import java.util.Date
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun WeatherScreen(navController: NavController, viewModel: ViewModel) {
-    val weather by viewModel.weather.collectAsState()
+fun WeatherScreen(navController: NavController, mvvm: ViewModel) {
+    val weather by mvvm.weather.collectAsState()
+    val hourlyForecast by mvvm.hourlyForecast.collectAsState()
+    val dailyForecast by mvvm.dailyForecast.collectAsState()
+
+    val context = LocalContext.current
 
     LaunchedEffect(Unit) {
-        viewModel.getLocationAndFetchWeather()
+        mvvm.getLocationAndFetchWeather(context)
     }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(text = weather?.name ?: "Cargando...") },
+                title = { Text(text = weather?.name ?: "WEATHER") },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(Icons.Filled.ArrowBack, contentDescription = null)
@@ -90,35 +98,40 @@ fun WeatherScreen(navController: NavController, viewModel: ViewModel) {
             )
         }
     ) { paddingValues ->
-        WeatherBodyScreen(modifier = Modifier.padding(paddingValues), weather)
+        WeatherBodyScreen(
+            modifier = Modifier.padding(paddingValues),
+            weather = weather,
+            hourlyForecast = hourlyForecast,
+            dailyForecast = dailyForecast
+        )
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun WeatherBodyScreen(modifier: Modifier, weather: WeatherResponse?) {
+fun WeatherBodyScreen(
+    modifier: Modifier,
+    weather: WeatherResponse?,
+    hourlyForecast: List<Forecast>?,
+    dailyForecast: List<Forecast>?
+) {
     Column(
         modifier = modifier
             .fillMaxSize()
             .padding(16.dp)
             .verticalScroll(rememberScrollState())
-            .background(Color.LightGray)
+            .background(Color.White)
     ) {
         weather?.let {
-            Card(modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)) {
+            Card(modifier = Modifier.padding(vertical = 8.dp)) {
                 Column(modifier = Modifier.padding(16.dp)) {
-                    Text(text = "Descripción: ${it.weather[0].description}", style = MaterialTheme.typography.bodyLarge)
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(text = "Temperatura: ${it.main.temp}ºC", style = MaterialTheme.typography.bodySmall)
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(text = "Sensación térmica: ${it.main.feels_like}ºC", style = MaterialTheme.typography.bodySmall)
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(text = "Probabilidad de lluvia: ${it.rain?.oneHour ?: 0}%", style = MaterialTheme.typography.bodySmall)
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Text("Descripción: ${it.weather[0].description}")
+                    Text("Temperatura: ${it.main.temp}ºC")
+                    Text("Sensación térmica: ${it.main.feels_like}ºC")
+                    Text("Probabilidad de lluvia: ${it.rain?.oneHour ?: 0}%")
                     Image(
                         painter = rememberImagePainter(data = "https://openweathermap.org/img/w/${it.weather[0].icon}.png"),
-                        contentDescription = "Weather icon",
-                        modifier = Modifier.size(100.dp).align(CenterHorizontally)
+                        contentDescription = "Weather icon"
                     )
                 }
             }
@@ -128,7 +141,25 @@ fun WeatherBodyScreen(modifier: Modifier, weather: WeatherResponse?) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Text(text = "Temperaturas por horas", style = MaterialTheme.typography.bodyLarge)
                     Spacer(modifier = Modifier.height(8.dp))
-                    // Implement hourly forecast UI here
+                    hourlyForecast?.let { forecasts ->
+                        Row(
+                            modifier = Modifier.horizontalScroll(rememberScrollState())
+                        ) {
+                            forecasts.take(24).forEach { forecast ->
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    modifier = Modifier.padding(horizontal = 8.dp)
+                                ) {
+                                    Text(text = "${forecast.main.temp}ºC")
+                                    Image(
+                                        painter = rememberImagePainter(data = "https://openweathermap.org/img/w/${forecast.weather[0].icon}.png"),
+                                        contentDescription = "Hourly weather icon"
+                                    )
+                                    Text(text = "${SimpleDateFormat("HH:mm").format(Date(forecast.dt * 1000))}")
+                                }
+                            }
+                        }
+                    }
                 }
             }
 
@@ -137,11 +168,31 @@ fun WeatherBodyScreen(modifier: Modifier, weather: WeatherResponse?) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Text(text = "Previsión por días", style = MaterialTheme.typography.bodyLarge)
                     Spacer(modifier = Modifier.height(8.dp))
-                    // Implement daily forecast UI here
+                    dailyForecast?.let { forecasts ->
+                        forecasts.take(7).forEach { forecast ->
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 4.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text(text = SimpleDateFormat("EEE, MMM d").format(Date(forecast.dt * 1000)))
+                                Image(
+                                    painter = rememberImagePainter(data = "https://openweathermap.org/img/w/${forecast.weather[0].icon}.png"),
+                                    contentDescription = "Daily weather icon"
+                                )
+                                Column(horizontalAlignment = Alignment.End) {
+                                    Text(text = "Máx: ${forecast.main.temp_max}ºC")
+                                    Text(text = "Mín: ${forecast.main.temp_min}ºC")
+                                    Text(text = "Viento: ${forecast.wind.speed} m/s")
+                                    Text(text = "Lluvia: ${forecast.rain?.oneHour ?: 0}%")
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
     }
 }
-
 
