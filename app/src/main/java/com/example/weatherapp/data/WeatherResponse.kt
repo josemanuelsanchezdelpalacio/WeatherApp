@@ -3,11 +3,17 @@ package com.example.weatherapp.data
 import com.google.gson.annotations.SerializedName
 
 data class WeatherResponse(
+    val coord: Coord,
     val weather: List<Weather>,
     val main: Main,
     val name: String,
     val wind: Wind,
     val rain: Rain?
+)
+
+data class Coord(
+    val lon: Double,
+    val lat: Double
 )
 
 data class Weather(
@@ -24,7 +30,8 @@ data class Main(
 )
 
 data class Wind(
-    val speed: Float
+    val speed: Float,
+    val deg: Float
 )
 
 data class Rain(
@@ -46,5 +53,7 @@ data class Forecast(
 
 data class DailyForecast(
     val dayOfWeek: String,
-    val avgTemperature: Float
+    val avgTemperature: Float,
+    val weatherIcon: String,
+    val avgRain: Float
 )

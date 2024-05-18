@@ -22,6 +22,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -42,6 +43,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TextField
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -59,6 +61,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -93,8 +96,23 @@ fun WeatherScreen(navController: NavController, mvvm: ViewModel) {
                     }
                 },
                 actions = {
-                    IconButton(onClick = { /* TODO: Implement search functionality */ }) {
-                        Icon(Icons.Filled.Search, contentDescription = null)
+                    var searchOpen by remember { mutableStateOf(false) }
+                    if (searchOpen) {
+                        TextField(
+                            value = mvvm.searchQuery.collectAsState().value,
+                            onValueChange = { mvvm.searchQuery.value = it },
+                            modifier = Modifier.fillMaxWidth(),
+                            placeholder = { Text("Search city") },
+                            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                            keyboardActions = KeyboardActions(onSearch = {
+                                mvvm.fetchWeather(mvvm.searchQuery.value)
+                                searchOpen = false
+                            })
+                        )
+                    } else {
+                        IconButton(onClick = { searchOpen = true }) {
+                            Icon(Icons.Filled.Search, contentDescription = null)
+                        }
                     }
                 }
             )
@@ -104,7 +122,8 @@ fun WeatherScreen(navController: NavController, mvvm: ViewModel) {
             modifier = Modifier.padding(paddingValues),
             weather = weather,
             hourlyForecast = hourlyForecast,
-            dailyForecast = dailyForecast
+            dailyForecast = dailyForecast,
+            mvvm
         )
     }
 }
@@ -114,37 +133,49 @@ fun WeatherBodyScreen(
     modifier: Modifier,
     weather: WeatherResponse?,
     hourlyForecast: List<Forecast>?,
-    dailyForecast: List<Forecast>?
+    dailyForecast: List<Forecast>?,
+    mvvm: ViewModel
 ) {
     Column(
         modifier = modifier
             .fillMaxSize()
             .padding(16.dp)
             .verticalScroll(rememberScrollState())
-            .background(Color.White)
+            .background(Color.Black)
     ) {
         weather?.let {
+            // Current weather card
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 8.dp)
+                    .padding(vertical = 8.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = Color(0xFF6597CC),
+                )
             ) {
-                Column(
-                    modifier = Modifier.padding(16.dp)
+                Row(
+                    modifier = Modifier.padding(16.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Text(
-                        text = "Descripción: ${it.weather[0].description}",
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Text("Temperatura: ${it.main.temp}ºC")
-                    Text("Sensación térmica: ${it.main.feels_like}ºC")
-                    Text("Probabilidad de lluvia: ${it.rain?.oneHour ?: 0}%")
-                    Image(
-                        painter = rememberImagePainter(data = "https://openweathermap.org/img/w/${it.weather[0].icon}.png"),
-                        contentDescription = "Weather icon",
-                        modifier = Modifier.size(100.dp)
-                    )
+                    Column {
+                        Text(
+                            text = "Descripción: ${it.weather[0].description}",
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.align(Alignment.Start)
+                        )
+                        Image(
+                            painter = rememberImagePainter(data = "https://openweathermap.org/img/w/${it.weather[0].icon}.png"),
+                            contentDescription = "Weather icon",
+                            modifier = Modifier.size(100.dp)
+                        )
+                        Text("Temperatura: ${it.main.temp}ºC")
+                        Text("Sensación térmica: ${it.main.feels_like}ºC")
+                    }
+                    Column {
+                        Text("Viento: ${it.wind.speed} m/s")
+                        Text("Dirección del viento: ${it.wind.deg}º")
+                    }
                 }
             }
 
@@ -158,7 +189,12 @@ fun WeatherBodyScreen(
                     modifier = Modifier.padding(16.dp)
                 ) {
                     Text(
-                        text = "Temperaturas por horas",
+                        text = "Por horas",
+                        style = MaterialTheme.typography.bodySmall,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = "Lluvias débiles en las próximas horas",
                         style = MaterialTheme.typography.bodySmall,
                         fontWeight = FontWeight.Bold
                     )
@@ -205,41 +241,32 @@ fun WeatherBodyScreen(
                         fontWeight = FontWeight.Bold
                     )
                     Spacer(modifier = Modifier.height(8.dp))
-                    dailyForecast?.let { forecasts ->
-                        forecasts.take(7).forEach { forecast ->
-                            Row(
+                    val dailyForecasts = mvvm.getDailyForecasts(dailyForecast ?: emptyList())
+                    LazyRow {
+                        items(dailyForecasts) { dailyForecast ->
+                            Column(
                                 modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(vertical = 4.dp),
-                                horizontalArrangement = Arrangement.SpaceBetween
+                                    .width(80.dp)
+                                    .padding(4.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally
                             ) {
                                 Text(
-                                    text = SimpleDateFormat("EEE, MMM d").format(Date(forecast.dt * 1000)),
+                                    text = dailyForecast.dayOfWeek,
                                     fontSize = 16.sp
                                 )
                                 Image(
-                                    painter = rememberImagePainter(data = "https://openweathermap.org/img/w/${forecast.weather[0].icon}.png"),
+                                    painter = rememberImagePainter(data = "https://openweathermap.org/img/w/${dailyForecast.weatherIcon}.png"),
                                     contentDescription = "Daily weather icon",
                                     modifier = Modifier.size(50.dp)
                                 )
-                                Column(horizontalAlignment = Alignment.End) {
-                                    Text(
-                                        text = "Máx: ${forecast.main.temp_max}ºC",
-                                        fontSize = 14.sp
-                                    )
-                                    Text(
-                                        text = "Mín: ${forecast.main.temp_min}ºC",
-                                        fontSize = 14.sp
-                                    )
-                                    Text(
-                                        text = "Viento: ${forecast.wind.speed} m/s",
-                                        fontSize = 14.sp
-                                    )
-                                    Text(
-                                        text = "Lluvia: ${forecast.rain?.oneHour ?: 0}%",
-                                        fontSize = 14.sp
-                                    )
-                                }
+                                Text(
+                                    text = if (dailyForecast.avgTemperature.isNaN()) "N/A" else "${dailyForecast.avgTemperature}ºC",
+                                    fontSize = 14.sp
+                                )
+                                Text(
+                                    text = "Lluvias: ${dailyForecast.avgRain}mm",
+                                    fontSize = 14.sp
+                                )
                             }
                         }
                     }

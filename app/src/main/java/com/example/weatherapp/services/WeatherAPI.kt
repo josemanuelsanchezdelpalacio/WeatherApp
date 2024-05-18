@@ -10,6 +10,7 @@ import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.GET
 import retrofit2.http.Query
 
+// Retrofit API interface
 interface WeatherAPI {
     @GET("weather")
     suspend fun getCurrentWeather(

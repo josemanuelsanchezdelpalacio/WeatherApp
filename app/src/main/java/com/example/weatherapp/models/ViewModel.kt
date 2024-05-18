@@ -12,6 +12,7 @@ import com.example.weatherapp.data.DailyForecast
 import com.example.weatherapp.data.Forecast
 import com.example.weatherapp.data.WeatherResponse
 import com.example.weatherapp.services.RetrofitInstance
+import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -26,6 +27,7 @@ class ViewModel(application: Application) : AndroidViewModel(application) {
     val hourlyForecast: StateFlow<List<Forecast>?> = _hourlyForecast
     private val _dailyForecast = MutableStateFlow<List<Forecast>?>(null)
     val dailyForecast: StateFlow<List<Forecast>?> = _dailyForecast
+    val searchQuery = MutableStateFlow("")
 
     private val fusedLocationClient = LocationServices.getFusedLocationProviderClient(application)
 
@@ -33,7 +35,7 @@ class ViewModel(application: Application) : AndroidViewModel(application) {
         fetchWeather("Jaca")
     }
 
-    private fun fetchWeather(city: String) {
+    fun fetchWeather(city: String) {
         viewModelScope.launch {
             val response = RetrofitInstance.api.getCurrentWeather(city, "4e8c5c3d428b37ea7efd0a54096c1fd8")
             _weather.value = response
@@ -69,7 +71,6 @@ class ViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    // Función para obtener el nombre del día de la semana a partir de una fecha
     fun getDayOfWeekName(date: Date): String {
         val calendar = Calendar.getInstance()
         calendar.time = date
@@ -78,38 +79,38 @@ class ViewModel(application: Application) : AndroidViewModel(application) {
         return dayOfWeekNames[dayOfWeek - 1]
     }
 
-    // Función para obtener las previsiones y temperaturas por día a partir de la lista de previsiones
     fun getDailyForecasts(forecasts: List<Forecast>): List<DailyForecast> {
         val today = Calendar.getInstance()
         val dailyForecasts = mutableListOf<DailyForecast>()
 
-        // Obtener el día siguiente a hoy
         today.add(Calendar.DAY_OF_YEAR, 1)
 
-        // Iterar por cada día de la semana
         repeat(7) {
-            // Filtrar las previsiones para el día actual
             val dayForecasts = forecasts.filter { forecast ->
                 val forecastDate = Calendar.getInstance()
                 forecastDate.timeInMillis = forecast.dt * 1000
                 forecastDate.get(Calendar.DAY_OF_YEAR) == today.get(Calendar.DAY_OF_YEAR)
             }
 
-            // Si hay previsiones para el día actual, calcular la temperatura promedio
             val avgTemp = if (dayForecasts.isNotEmpty()) {
                 dayForecasts.map { it.main.temp }.average().toFloat()
             } else {
                 Float.NaN
             }
 
-            // Agregar la previsiones y temperaturas por día a la lista
-            dailyForecasts.add(DailyForecast(getDayOfWeekName(today.time), avgTemp))
+            val avgRain = if (dayForecasts.isNotEmpty()) {
+                dayForecasts.mapNotNull { it.rain?.oneHour ?: it.rain?.threeHours }.average().toFloat()
+            } else {
+                Float.NaN
+            }
 
-            // Mover al siguiente día
+            val weatherIcon = dayForecasts.firstOrNull()?.weather?.firstOrNull()?.icon ?: ""
+
+            dailyForecasts.add(DailyForecast(getDayOfWeekName(today.time), avgTemp, weatherIcon, avgRain))
+
             today.add(Calendar.DAY_OF_YEAR, 1)
         }
 
         return dailyForecasts
     }
-
 }
