@@ -8,8 +8,7 @@ import androidx.core.app.ActivityCompat
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.weatherapp.data.DailyForecast
-import com.example.weatherapp.data.Forecast
+import com.example.weatherapp.data.PronosticoSemanalResponse
 import com.example.weatherapp.data.WeatherResponse
 import com.example.weatherapp.services.RetrofitInstance
 import com.google.android.gms.location.FusedLocationProviderClient
@@ -23,37 +22,34 @@ import java.util.Date
 class ViewModel(application: Application) : AndroidViewModel(application) {
     private val _weather = MutableStateFlow<WeatherResponse?>(null)
     val weather: StateFlow<WeatherResponse?> = _weather
-    private val _hourlyForecast = MutableStateFlow<List<Forecast>?>(null)
-    val hourlyForecast: StateFlow<List<Forecast>?> = _hourlyForecast
-    private val _dailyForecast = MutableStateFlow<List<Forecast>?>(null)
-    val dailyForecast: StateFlow<List<Forecast>?> = _dailyForecast
+
+    private val _pronosticoSemanal = MutableStateFlow<PronosticoSemanalResponse?>(null)
+    val pronosticoSemanal: StateFlow<PronosticoSemanalResponse?> = _pronosticoSemanal
+
     val searchQuery = MutableStateFlow("")
 
-    private val fusedLocationClient = LocationServices.getFusedLocationProviderClient(application)
+    //obtener ubicacion actual del usuario
+    private val clienteUbicacionFused = LocationServices.getFusedLocationProviderClient(application)
 
-    init {
-        fetchWeather("Jaca")
-    }
-
-    fun fetchWeather(city: String) {
+    //obtener el clima de una ciudad especifica
+    fun obtenerClima(ciudad: String) {
         viewModelScope.launch {
-            val response = RetrofitInstance.api.getCurrentWeather(city, "4e8c5c3d428b37ea7efd0a54096c1fd8")
-            _weather.value = response
+            //llamada a la API para obtener la informacion
+            val respuesta = RetrofitInstance.api.obtenerClimaActual(ciudad, "4e8c5c3d428b37ea7efd0a54096c1fd8")
+            _weather.value = respuesta
         }
     }
 
-    fun fetchWeatherByLocation(lat: Double, lon: Double) {
+    //para obtener el clima usando coordenadas
+    fun obtenerClimaPorUbicacion(lat: Double, lon: Double) {
         viewModelScope.launch {
-            val weatherResponse = RetrofitInstance.api.getCurrentWeatherByCoordinates(lat, lon, "4e8c5c3d428b37ea7efd0a54096c1fd8")
-            val hourlyResponse = RetrofitInstance.api.getHourlyForecast(lat, lon, "4e8c5c3d428b37ea7efd0a54096c1fd8")
-            val dailyResponse = RetrofitInstance.api.getDailyForecast(lat, lon, "4e8c5c3d428b37ea7efd0a54096c1fd8")
-            _weather.value = weatherResponse
-            _hourlyForecast.value = hourlyResponse.list
-            _dailyForecast.value = dailyResponse.list
+            val respuestaClima = RetrofitInstance.api.obtenerClimaActualPorCoordenadas(lat, lon, "4e8c5c3d428b37ea7efd0a54096c1fd8")
+            _weather.value = respuestaClima
         }
     }
 
-    fun getLocationAndFetchWeather(context: Context) {
+    //obtener la ubicacion actual y obtener su clima correspondiente
+    fun obtenerUbicacionYClima(context: Context) {
         if (ActivityCompat.checkSelfPermission(
                 context,
                 Manifest.permission.ACCESS_FINE_LOCATION
@@ -64,53 +60,25 @@ class ViewModel(application: Application) : AndroidViewModel(application) {
         ) {
             return
         }
-        fusedLocationClient.lastLocation.addOnSuccessListener { location ->
-            if (location != null) {
-                fetchWeatherByLocation(location.latitude, location.longitude)
+        clienteUbicacionFused.lastLocation.addOnSuccessListener { location ->
+            location?.let {
+                obtenerClimaPorUbicacion(it.latitude, it.longitude)
             }
         }
     }
 
-    fun getDayOfWeekName(date: Date): String {
-        val calendar = Calendar.getInstance()
-        calendar.time = date
-        val dayOfWeek = calendar.get(Calendar.DAY_OF_WEEK)
-        val dayOfWeekNames = arrayOf("Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado")
-        return dayOfWeekNames[dayOfWeek - 1]
-    }
-
-    fun getDailyForecasts(forecasts: List<Forecast>): List<DailyForecast> {
-        val today = Calendar.getInstance()
-        val dailyForecasts = mutableListOf<DailyForecast>()
-
-        today.add(Calendar.DAY_OF_YEAR, 1)
-
-        repeat(7) {
-            val dayForecasts = forecasts.filter { forecast ->
-                val forecastDate = Calendar.getInstance()
-                forecastDate.timeInMillis = forecast.dt * 1000
-                forecastDate.get(Calendar.DAY_OF_YEAR) == today.get(Calendar.DAY_OF_YEAR)
-            }
-
-            val avgTemp = if (dayForecasts.isNotEmpty()) {
-                dayForecasts.map { it.main.temp }.average().toFloat()
-            } else {
-                Float.NaN
-            }
-
-            val avgRain = if (dayForecasts.isNotEmpty()) {
-                dayForecasts.mapNotNull { it.rain?.oneHour ?: it.rain?.threeHours }.average().toFloat()
-            } else {
-                Float.NaN
-            }
-
-            val weatherIcon = dayForecasts.firstOrNull()?.weather?.firstOrNull()?.icon ?: ""
-
-            dailyForecasts.add(DailyForecast(getDayOfWeekName(today.time), avgTemp, weatherIcon, avgRain))
-
-            today.add(Calendar.DAY_OF_YEAR, 1)
+    fun obtenerPronosticoSemanal(ciudad: String) {
+        viewModelScope.launch {
+            val respuesta = RetrofitInstance.api.obtenerPronosticoSemanal(ciudad, "4e8c5c3d428b37ea7efd0a54096c1fd8")
+            _pronosticoSemanal.value = respuesta
         }
-
-        return dailyForecasts
     }
+
+    fun obtenerPronosticoSemanalPorUbicacion(lat: Double, lon: Double) {
+        viewModelScope.launch {
+            val respuesta = RetrofitInstance.api.obtenerPronosticoSemanalPorCoordenadas(lat, lon, "4e8c5c3d428b37ea7efd0a54096c1fd8")
+            _pronosticoSemanal.value = respuesta
+        }
+    }
+
 }

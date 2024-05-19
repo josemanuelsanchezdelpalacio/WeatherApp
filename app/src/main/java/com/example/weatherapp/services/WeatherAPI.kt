@@ -1,6 +1,6 @@
 package com.example.weatherapp.services
 
-import com.example.weatherapp.data.ForecastResponse
+import com.example.weatherapp.data.PronosticoSemanalResponse
 import com.example.weatherapp.data.WeatherResponse
 import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
 import kotlinx.serialization.json.Json
@@ -10,38 +10,44 @@ import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.GET
 import retrofit2.http.Query
 
-// Retrofit API interface
 interface WeatherAPI {
+    //obtengo info del clima de la ciudad
     @GET("weather")
-    suspend fun getCurrentWeather(
-        @Query("q") city: String,
-        @Query("appid") apiKey: String,
-        @Query("units") units: String = "metric"
+    suspend fun obtenerClimaActual(
+        @Query("q") ciudad: String,
+        @Query("appid") ID_API: String,
+        @Query("units") unidades: String = "metric",
+        @Query("lang") idioma: String = "es"
     ): WeatherResponse
 
+    //obtengo el clima segun las coordenadas
     @GET("weather")
-    suspend fun getCurrentWeatherByCoordinates(
-        @Query("lat") lat: Double,
-        @Query("lon") lon: Double,
-        @Query("appid") apiKey: String,
-        @Query("units") units: String = "metric"
+    suspend fun obtenerClimaActualPorCoordenadas(
+        @Query("lat") latitud: Double,
+        @Query("lon") longitud: Double,
+        @Query("appid") ID_API: String,
+        @Query("units") unidades: String = "metric",
+        @Query("lang") idioma: String = "es"
     ): WeatherResponse
-
-    @GET("forecast/hourly")
-    suspend fun getHourlyForecast(
-        @Query("lat") lat: Double,
-        @Query("lon") lon: Double,
-        @Query("appid") apiKey: String,
-        @Query("units") units: String = "metric"
-    ): ForecastResponse
 
     @GET("forecast/daily")
-    suspend fun getDailyForecast(
-        @Query("lat") lat: Double,
-        @Query("lon") lon: Double,
-        @Query("appid") apiKey: String,
-        @Query("units") units: String = "metric"
-    ): ForecastResponse
+    suspend fun obtenerPronosticoSemanal(
+        @Query("q") ciudad: String,
+        @Query("appid") ID_API: String,
+        @Query("units") unidades: String = "metric",
+        @Query("lang") idioma: String = "es",
+        @Query("cnt") dias: Int = 7
+    ): PronosticoSemanalResponse
+
+    @GET("forecast/daily")
+    suspend fun obtenerPronosticoSemanalPorCoordenadas(
+        @Query("lat") latitud: Double,
+        @Query("lon") longitud: Double,
+        @Query("appid") ID_API: String,
+        @Query("units") unidades: String = "metric",
+        @Query("lang") idioma: String = "es",
+        @Query("cnt") dias: Int = 7
+    ): PronosticoSemanalResponse
 }
 
 object RetrofitInstance {

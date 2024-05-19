@@ -67,50 +67,49 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import coil.compose.rememberImagePainter
-import com.example.weatherapp.data.Forecast
+import com.example.weatherapp.data.PronosticoSemanalResponse
 import com.example.weatherapp.data.WeatherResponse
 import com.example.weatherapp.models.ViewModel
+import com.example.weatherapp.navigation.AppScreens
 import java.text.SimpleDateFormat
 import java.util.Date
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun WeatherScreen(navController: NavController, mvvm: ViewModel) {
-    val weather by mvvm.weather.collectAsState()
-    val hourlyForecast by mvvm.hourlyForecast.collectAsState()
-    val dailyForecast by mvvm.dailyForecast.collectAsState()
-
-    val context = LocalContext.current
+    val clima by mvvm.weather.collectAsState()
+    val pronostico by mvvm.pronosticoSemanal.collectAsState()
+    val contexto = LocalContext.current
 
     LaunchedEffect(Unit) {
-        mvvm.getLocationAndFetchWeather(context)
+        mvvm.obtenerUbicacionYClima(contexto)
     }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(text = weather?.name ?: "WEATHER") },
+                title = { Text(text = clima?.name ?: "WEATHER") },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(Icons.Filled.ArrowBack, contentDescription = null)
                     }
                 },
                 actions = {
-                    var searchOpen by remember { mutableStateOf(false) }
-                    if (searchOpen) {
+                    var busquedaAbierta by remember { mutableStateOf(false) }
+                    if (busquedaAbierta) {
                         TextField(
                             value = mvvm.searchQuery.collectAsState().value,
                             onValueChange = { mvvm.searchQuery.value = it },
                             modifier = Modifier.fillMaxWidth(),
-                            placeholder = { Text("Search city") },
+                            placeholder = { Text("Buscar ciudad") },
                             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
                             keyboardActions = KeyboardActions(onSearch = {
-                                mvvm.fetchWeather(mvvm.searchQuery.value)
-                                searchOpen = false
+                                mvvm.obtenerClima(mvvm.searchQuery.value)
+                                busquedaAbierta = false
                             })
                         )
                     } else {
-                        IconButton(onClick = { searchOpen = true }) {
+                        IconButton(onClick = { busquedaAbierta = true }) {
                             Icon(Icons.Filled.Search, contentDescription = null)
                         }
                     }
@@ -118,40 +117,25 @@ fun WeatherScreen(navController: NavController, mvvm: ViewModel) {
             )
         }
     ) { paddingValues ->
-        WeatherBodyScreen(
-            modifier = Modifier.padding(paddingValues),
-            weather = weather,
-            hourlyForecast = hourlyForecast,
-            dailyForecast = dailyForecast,
-            mvvm
-        )
+        PantallaCuerpoClima(modifier = Modifier.padding(paddingValues), clima = clima, pronostico = pronostico, mvvm = mvvm)
     }
 }
 
 @Composable
-fun WeatherBodyScreen(
-    modifier: Modifier,
-    weather: WeatherResponse?,
-    hourlyForecast: List<Forecast>?,
-    dailyForecast: List<Forecast>?,
-    mvvm: ViewModel
-) {
+fun PantallaCuerpoClima(modifier: Modifier, clima: WeatherResponse?, pronostico: PronosticoSemanalResponse?, mvvm: ViewModel) {
     Column(
         modifier = modifier
             .fillMaxSize()
             .padding(16.dp)
             .verticalScroll(rememberScrollState())
-            .background(Color.Black)
     ) {
-        weather?.let {
-            // Current weather card
+        clima?.let {
+            // Tarjeta con información actual del clima
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(vertical = 8.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = Color(0xFF6597CC),
-                )
+                colors = CardDefaults.cardColors(containerColor = Color(0xFF6597CC))
             ) {
                 Row(
                     modifier = Modifier.padding(16.dp),
@@ -159,66 +143,49 @@ fun WeatherBodyScreen(
                 ) {
                     Column {
                         Text(
-                            text = "Descripción: ${it.weather[0].description}",
+                            text = clima.weather[0].description,
                             fontSize = 18.sp,
                             fontWeight = FontWeight.Bold,
                             modifier = Modifier.align(Alignment.Start)
                         )
                         Image(
-                            painter = rememberImagePainter(data = "https://openweathermap.org/img/w/${it.weather[0].icon}.png"),
-                            contentDescription = "Weather icon",
+                            painter = rememberImagePainter(data = "https://openweathermap.org/img/w/${clima.weather[0].icon}.png"),
+                            contentDescription = "Icono del clima",
                             modifier = Modifier.size(100.dp)
                         )
-                        Text("Temperatura: ${it.main.temp}ºC")
-                        Text("Sensación térmica: ${it.main.feels_like}ºC")
+                        Text("${clima.main.temp}ºC")
+                        Text("Sensación térmica: ${clima.main.feels_like}ºC")
                     }
                     Column {
-                        Text("Viento: ${it.wind.speed} m/s")
-                        Text("Dirección del viento: ${it.wind.deg}º")
+                        Text("Viento: ${clima.wind.speed} m/s")
+                        Text("Dirección del viento: ${clima.wind.deg}º")
                     }
                 }
             }
 
-            // Hourly forecast card
+            // Tarjeta con pronóstico semanal de temperatura
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 8.dp)
+                    .padding(vertical = 8.dp),
+                colors = CardDefaults.cardColors(containerColor = Color(0xFF6597CC))
             ) {
-                Column(
-                    modifier = Modifier.padding(16.dp)
+                Row(
+                    modifier = Modifier.padding(16.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Text(
-                        text = "Por horas",
-                        style = MaterialTheme.typography.bodySmall,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Text(
-                        text = "Lluvias débiles en las próximas horas",
-                        style = MaterialTheme.typography.bodySmall,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    hourlyForecast?.let { forecasts ->
+                    Column {
+                        Text(
+                            text = "Pronóstico semanal de temperatura",
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.align(Alignment.Start)
+                        )
                         LazyRow {
-                            items(forecasts.take(24)) { forecast ->
-                                Column(
-                                    horizontalAlignment = Alignment.CenterHorizontally,
-                                    modifier = Modifier.padding(horizontal = 8.dp)
-                                ) {
-                                    Text(
-                                        text = "${SimpleDateFormat("HH:mm").format(Date(forecast.dt * 1000))}",
-                                        fontSize = 14.sp
-                                    )
-                                    Image(
-                                        painter = rememberImagePainter(data = "https://openweathermap.org/img/w/${forecast.weather[0].icon}.png"),
-                                        contentDescription = "Hourly weather icon",
-                                        modifier = Modifier.size(50.dp)
-                                    )
-                                    Text(
-                                        text = "${forecast.main.temp}ºC",
-                                        fontSize = 14.sp
-                                    )
+                            items(pronostico?.list ?: emptyList()) { dia ->
+                                Column {
+                                    Text("Día: ${dia.dt}")
+                                    Text("Temp. media: ${dia.temp.day}ºC")
                                 }
                             }
                         }
@@ -226,47 +193,30 @@ fun WeatherBodyScreen(
                 }
             }
 
-            // Daily forecast card
+            // Tarjeta con pronóstico semanal de lluvia
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 8.dp)
+                    .padding(vertical = 8.dp),
+                colors = CardDefaults.cardColors(containerColor = Color(0xFF6597CC))
             ) {
-                Column(
-                    modifier = Modifier.padding(16.dp)
+                Row(
+                    modifier = Modifier.padding(16.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Text(
-                        text = "Previsión por días",
-                        style = MaterialTheme.typography.bodyLarge,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    val dailyForecasts = mvvm.getDailyForecasts(dailyForecast ?: emptyList())
-                    LazyRow {
-                        items(dailyForecasts) { dailyForecast ->
-                            Column(
-                                modifier = Modifier
-                                    .width(80.dp)
-                                    .padding(4.dp),
-                                horizontalAlignment = Alignment.CenterHorizontally
-                            ) {
-                                Text(
-                                    text = dailyForecast.dayOfWeek,
-                                    fontSize = 16.sp
-                                )
-                                Image(
-                                    painter = rememberImagePainter(data = "https://openweathermap.org/img/w/${dailyForecast.weatherIcon}.png"),
-                                    contentDescription = "Daily weather icon",
-                                    modifier = Modifier.size(50.dp)
-                                )
-                                Text(
-                                    text = if (dailyForecast.avgTemperature.isNaN()) "N/A" else "${dailyForecast.avgTemperature}ºC",
-                                    fontSize = 14.sp
-                                )
-                                Text(
-                                    text = "Lluvias: ${dailyForecast.avgRain}mm",
-                                    fontSize = 14.sp
-                                )
+                    Column {
+                        Text(
+                            text = "Pronóstico semanal de lluvia (mm)",
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.align(Alignment.Start)
+                        )
+                        LazyRow {
+                            items(pronostico?.list ?: emptyList()) { dia ->
+                                Column {
+                                    Text("Día: ${dia.dt}")
+                                    Text("Lluvia: ${dia.rain ?: 0} mm")
+                                }
                             }
                         }
                     }
