@@ -78,11 +78,10 @@ import java.util.Date
 @Composable
 fun WeatherScreen(navController: NavController, mvvm: ViewModel) {
     val clima by mvvm.weather.collectAsState()
-    val pronostico by mvvm.pronosticoSemanal.collectAsState()
-    val contexto = LocalContext.current
+    val context = LocalContext.current
 
     LaunchedEffect(Unit) {
-        mvvm.obtenerUbicacionYClima(contexto)
+        mvvm.initLocationClient(context)
     }
 
     Scaffold(
@@ -104,7 +103,7 @@ fun WeatherScreen(navController: NavController, mvvm: ViewModel) {
                             placeholder = { Text("Buscar ciudad") },
                             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
                             keyboardActions = KeyboardActions(onSearch = {
-                                mvvm.obtenerClima(mvvm.searchQuery.value)
+                                mvvm.obtenerClimaPorCiudad(mvvm.searchQuery.value)
                                 busquedaAbierta = false
                             })
                         )
@@ -117,12 +116,12 @@ fun WeatherScreen(navController: NavController, mvvm: ViewModel) {
             )
         }
     ) { paddingValues ->
-        PantallaCuerpoClima(modifier = Modifier.padding(paddingValues), clima = clima, pronostico = pronostico, mvvm = mvvm)
+        ScreenBodyClima(modifier = Modifier.padding(paddingValues), clima = clima, mvvm = mvvm)
     }
 }
 
 @Composable
-fun PantallaCuerpoClima(modifier: Modifier, clima: WeatherResponse?, pronostico: PronosticoSemanalResponse?, mvvm: ViewModel) {
+fun ScreenBodyClima(modifier: Modifier, clima: WeatherResponse?, mvvm: ViewModel) {
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -159,66 +158,6 @@ fun PantallaCuerpoClima(modifier: Modifier, clima: WeatherResponse?, pronostico:
                     Column {
                         Text("Viento: ${clima.wind.speed} m/s")
                         Text("Dirección del viento: ${clima.wind.deg}º")
-                    }
-                }
-            }
-
-            // Tarjeta con pronóstico semanal de temperatura
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 8.dp),
-                colors = CardDefaults.cardColors(containerColor = Color(0xFF6597CC))
-            ) {
-                Row(
-                    modifier = Modifier.padding(16.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Column {
-                        Text(
-                            text = "Pronóstico semanal de temperatura",
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.Bold,
-                            modifier = Modifier.align(Alignment.Start)
-                        )
-                        LazyRow {
-                            items(pronostico?.list ?: emptyList()) { dia ->
-                                Column {
-                                    Text("Día: ${dia.dt}")
-                                    Text("Temp. media: ${dia.temp.day}ºC")
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            // Tarjeta con pronóstico semanal de lluvia
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 8.dp),
-                colors = CardDefaults.cardColors(containerColor = Color(0xFF6597CC))
-            ) {
-                Row(
-                    modifier = Modifier.padding(16.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Column {
-                        Text(
-                            text = "Pronóstico semanal de lluvia (mm)",
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.Bold,
-                            modifier = Modifier.align(Alignment.Start)
-                        )
-                        LazyRow {
-                            items(pronostico?.list ?: emptyList()) { dia ->
-                                Column {
-                                    Text("Día: ${dia.dt}")
-                                    Text("Lluvia: ${dia.rain ?: 0} mm")
-                                }
-                            }
-                        }
                     }
                 }
             }

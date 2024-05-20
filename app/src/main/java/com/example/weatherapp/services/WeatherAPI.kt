@@ -29,25 +29,6 @@ interface WeatherAPI {
         @Query("units") unidades: String = "metric",
         @Query("lang") idioma: String = "es"
     ): WeatherResponse
-
-    @GET("forecast/daily")
-    suspend fun obtenerPronosticoSemanal(
-        @Query("q") ciudad: String,
-        @Query("appid") ID_API: String,
-        @Query("units") unidades: String = "metric",
-        @Query("lang") idioma: String = "es",
-        @Query("cnt") dias: Int = 7
-    ): PronosticoSemanalResponse
-
-    @GET("forecast/daily")
-    suspend fun obtenerPronosticoSemanalPorCoordenadas(
-        @Query("lat") latitud: Double,
-        @Query("lon") longitud: Double,
-        @Query("appid") ID_API: String,
-        @Query("units") unidades: String = "metric",
-        @Query("lang") idioma: String = "es",
-        @Query("cnt") dias: Int = 7
-    ): PronosticoSemanalResponse
 }
 
 object RetrofitInstance {
