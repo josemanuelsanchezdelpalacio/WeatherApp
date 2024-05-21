@@ -1,6 +1,5 @@
 package com.example.weatherapp.services
 
-import com.example.weatherapp.data.PronosticoSemanalResponse
 import com.example.weatherapp.data.WeatherResponse
 import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
 import kotlinx.serialization.json.Json
