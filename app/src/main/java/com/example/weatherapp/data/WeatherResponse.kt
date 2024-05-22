@@ -8,7 +8,8 @@ data class WeatherResponse(
     val main: Principal,
     val name: String,
     val wind: Viento,
-    val rain: Lluvia?
+    val rain: Lluvia?,
+    val pronostico: List<PronosticoDiario>?
 )
 
 data class Coordenadas(

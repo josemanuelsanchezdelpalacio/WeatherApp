@@ -1,9 +1,10 @@
 package com.example.weatherapp.screens
 
-import android.app.Activity
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -14,10 +15,13 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -25,33 +29,41 @@ import androidx.navigation.NavController
 import coil.compose.rememberImagePainter
 import com.example.weatherapp.data.WeatherResponse
 import com.example.weatherapp.models.ViewModel
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Locale
+import kotlin.math.cos
+import kotlin.math.roundToInt
+import kotlin.math.sin
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun WeatherScreen(navController: NavController, mvvm: ViewModel) {
     val clima by mvvm.weather.collectAsState()
     val cityName by mvvm.currentCityName.collectAsState()
-    val context = LocalContext.current
 
     Scaffold(
         topBar = {
             var searchOpen by remember { mutableStateOf(false) }
+            var cityToSearch by remember { mutableStateOf("") }
 
-            TopAppBar(
-                title = { Text(text = cityName) },
+            CenterAlignedTopAppBar(
+                title = { Text(text = cityName, maxLines = 1, overflow = TextOverflow.Ellipsis) },
                 actions = {
                     if (searchOpen) {
-                        TextField(
-                            value = mvvm.searchQuery.collectAsState().value,
-                            onValueChange = { mvvm.searchQuery.value = it },
-                            modifier = Modifier.fillMaxWidth(),
-                            placeholder = { Text("Buscar ciudad") },
-                            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-                            keyboardActions = KeyboardActions(onSearch = {
-                                mvvm.obtenerClimaPorCiudad(mvvm.searchQuery.value)
-                                searchOpen = false
-                            })
-                        )
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            TextField(
+                                value = cityToSearch,
+                                onValueChange = { cityToSearch = it },
+                                modifier = Modifier.fillMaxWidth(),
+                                placeholder = { Text("Buscar ciudad") },
+                                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                                keyboardActions = KeyboardActions(onSearch = {
+                                    mvvm.obtenerClimaPorCiudad(cityToSearch)
+                                    searchOpen = false
+                                })
+                            )
+                        }
                     } else {
                         IconButton(onClick = { searchOpen = true }) {
                             Icon(Icons.Filled.Search, contentDescription = null)
@@ -65,7 +77,6 @@ fun WeatherScreen(navController: NavController, mvvm: ViewModel) {
     }
 }
 
-
 @Composable
 fun ScreenBodyClima(modifier: Modifier, clima: WeatherResponse?, mvvm: ViewModel) {
     Box(
@@ -78,13 +89,12 @@ fun ScreenBodyClima(modifier: Modifier, clima: WeatherResponse?, mvvm: ViewModel
         clima?.let {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center,
-                modifier = Modifier.fillMaxSize()
+                modifier = Modifier.fillMaxWidth()
             ) {
                 Image(
                     painter = rememberImagePainter(data = "https://openweathermap.org/img/w/${clima.weather[0].icon}.png"),
                     contentDescription = "Icono del clima",
-                    modifier = Modifier.size(150.dp) // Icono en grande
+                    modifier = Modifier.size(150.dp) // Icono grande
                 )
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
@@ -99,55 +109,55 @@ fun ScreenBodyClima(modifier: Modifier, clima: WeatherResponse?, mvvm: ViewModel
                     fontSize = 24.sp,
                     color = Color.White
                 )
-                Spacer(modifier = Modifier.height(32.dp))
-                Row(
-                    horizontalArrangement = Arrangement.SpaceAround,
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp)
+                Spacer(modifier = Modifier.height(24.dp))
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier.fillMaxWidth()
                 ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(
-                            text = "Sensación térmica",
-                            fontSize = 18.sp,
-                            color = Color.White
-                        )
-                        Text(
-                            text = "${clima.main.feels_like}ºC",
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.White
-                        )
-                    }
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(
-                            text = "Viento",
-                            fontSize = 18.sp,
-                            color = Color.White
-                        )
-                        Text(
-                            text = "${clima.wind.speed} m/s",
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.White
-                        )
-                    }
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(
-                            text = "Dirección del viento",
-                            fontSize = 18.sp,
-                            color = Color.White
-                        )
-                        Text(
-                            text = "${clima.wind.deg}º",
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.White
-                        )
-                    }
+                    Text(
+                        text = "Sensación térmica: ${clima?.main?.feels_like}ºC",
+                        fontSize = 18.sp,
+                        color = Color.White,
+                        modifier = Modifier.padding(vertical = 4.dp)
+                    )
+                    Text(
+                        text = "Velocidad del viento: ${(clima.wind.speed * 3.6).roundToInt()} km/h",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
+                    )
+                    Text(
+                        text = "Dirección del viento",
+                        fontSize = 18.sp,
+                        color = Color.White
+                    )
+                    WindDirectionArrow(degrees = clima.wind.deg)
                 }
             }
         }
     }
+}
+
+@Composable
+fun WindDirectionArrow(degrees: Float) {
+    Canvas(
+        modifier = Modifier.size(24.dp),
+        onDraw = {
+            val centerX = size.width / 2
+            val centerY = size.height / 2
+            val arrowLength = size.width / 2
+
+            // Calcular el punto final de la flecha según los grados
+            val endX = centerX + arrowLength * cos(Math.toRadians(degrees.toDouble())).toFloat()
+            val endY = centerY - arrowLength * sin(Math.toRadians(degrees.toDouble())).toFloat()
+
+            // Dibujar la línea de la flecha
+            drawLine(
+                color = Color.White,
+                start = Offset(centerX, centerY),
+                end = Offset(endX, endY),
+                strokeWidth = 2.dp.toPx()
+            )
+        }
+    )
 }

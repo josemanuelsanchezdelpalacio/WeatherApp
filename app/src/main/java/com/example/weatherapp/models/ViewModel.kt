@@ -28,10 +28,41 @@ class ViewModel(application: Application) : AndroidViewModel(application) {
     private val _weather = MutableStateFlow<WeatherResponse?>(null)
     val weather: StateFlow<WeatherResponse?> = _weather
 
-    val searchQuery = MutableStateFlow("")
-
-    private val _currentCityName = MutableStateFlow("WEATHER")
+    private val _currentCityName = MutableStateFlow("")
     val currentCityName: StateFlow<String> = _currentCityName
+
+//    init {
+//        getCurrentLocation()
+//    }
+
+    fun getCurrentLocation() {
+        val fusedLocationClient = LocationServices.getFusedLocationProviderClient(getApplication<Application>().applicationContext)
+
+        if (ActivityCompat.checkSelfPermission(
+                getApplication(),
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
+                getApplication(),
+                Manifest.permission.ACCESS_COARSE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            // Handle the case where location permissions are not granted
+            // You might want to notify the user or request permissions
+            return
+        }
+
+        fusedLocationClient.lastLocation.addOnSuccessListener { location ->
+            if (location != null) {
+                // Use location.latitude and location.longitude
+                obtenerClimaPorUbicacion(location.latitude, location.longitude)
+            } else {
+                // Handle case where last known location is not available
+                // You can request a new location update here if needed
+            }
+        }.addOnFailureListener { exception ->
+            // Handle any errors that might occur when obtaining the location
+        }
+    }
 
     fun obtenerClimaPorCiudad(ciudad: String) {
         viewModelScope.launch {
