@@ -2,14 +2,14 @@ package com.example.weatherapp.data
 
 import com.google.gson.annotations.SerializedName
 
+/** Representa la respuesta de la API con toda la información. */
 data class WeatherResponse(
     val coord: Coordenadas,
     val weather: List<Clima>,
     val main: Principal,
     val name: String,
     val wind: Viento,
-    val rain: Lluvia?,
-    val pronostico: List<PronosticoDiario>?
+    val rain: Lluvia?
 )
 
 data class Coordenadas(
@@ -35,20 +35,7 @@ data class Viento(
     val deg: Float
 )
 
+/** Representa la información sobre las precipitaciones de la última hora. */
 data class Lluvia(
     @SerializedName("1h") val unaHora: Float?,
-    @SerializedName("3h") val tresHoras: Float?
-)
-
-data class PronosticoDiario(
-    val dt: Long,
-    val temp: Temperatura,
-    val weather: List<Clima>,
-    val rain: Float?
-)
-
-data class Temperatura(
-    val day: Float,
-    val min: Float,
-    val max: Float
 )

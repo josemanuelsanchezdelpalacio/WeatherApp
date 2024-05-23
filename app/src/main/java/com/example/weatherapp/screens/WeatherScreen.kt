@@ -15,6 +15,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
@@ -27,6 +28,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil.compose.rememberImagePainter
+import com.example.weatherapp.R
 import com.example.weatherapp.data.WeatherResponse
 import com.example.weatherapp.models.ViewModel
 import java.text.SimpleDateFormat
@@ -39,8 +41,9 @@ import kotlin.math.sin
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun WeatherScreen(navController: NavController, mvvm: ViewModel) {
-    val clima by mvvm.weather.collectAsState()
-    val cityName by mvvm.currentCityName.collectAsState()
+    val clima by mvvm.clima.collectAsState()
+    val pronostico by mvvm.pronostico.collectAsState()
+    val cityName by mvvm.nombreCiudad.collectAsState()
 
     Scaffold(
         topBar = {
@@ -131,7 +134,7 @@ fun ScreenBodyClima(modifier: Modifier, clima: WeatherResponse?, mvvm: ViewModel
                         fontSize = 18.sp,
                         color = Color.White
                     )
-                    WindDirectionArrow(degrees = clima.wind.deg)
+                    direccionVientoFlecha(degrees = clima.wind.deg)
                 }
             }
         }
@@ -139,25 +142,18 @@ fun ScreenBodyClima(modifier: Modifier, clima: WeatherResponse?, mvvm: ViewModel
 }
 
 @Composable
-fun WindDirectionArrow(degrees: Float) {
-    Canvas(
-        modifier = Modifier.size(24.dp),
-        onDraw = {
-            val centerX = size.width / 2
-            val centerY = size.height / 2
-            val arrowLength = size.width / 2
+fun direccionVientoFlecha(degrees: Float) {
+    val arrowImage = painterResource(R.drawable.flecha)
 
-            // Calcular el punto final de la flecha según los grados
-            val endX = centerX + arrowLength * cos(Math.toRadians(degrees.toDouble())).toFloat()
-            val endY = centerY - arrowLength * sin(Math.toRadians(degrees.toDouble())).toFloat()
-
-            // Dibujar la línea de la flecha
-            drawLine(
-                color = Color.White,
-                start = Offset(centerX, centerY),
-                end = Offset(endX, endY),
-                strokeWidth = 2.dp.toPx()
-            )
-        }
-    )
+    Box(
+        modifier = Modifier
+            .size(24.dp)
+            .rotate(degrees)
+    ) {
+        Image(
+            painter = arrowImage,
+            contentDescription = null,
+            modifier = Modifier.fillMaxSize()
+        )
+    }
 }
