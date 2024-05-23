@@ -85,7 +85,7 @@ fun ScreenBodyClima(modifier: Modifier, clima: WeatherResponse?, mvvm: ViewModel
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(Color(0xFF87CEEB)) // Fondo azul claro
+            .background(Color(0xFF87CEEB))
             .padding(16.dp)
             .verticalScroll(rememberScrollState())
     ) {
