@@ -97,7 +97,7 @@ fun ScreenBodyClima(modifier: Modifier, clima: WeatherResponse?, mvvm: ViewModel
                 Image(
                     painter = rememberImagePainter(data = "https://openweathermap.org/img/w/${clima.weather[0].icon}.png"),
                     contentDescription = "Icono del clima",
-                    modifier = Modifier.size(150.dp) // Icono grande
+                    modifier = Modifier.size(150.dp)
                 )
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
@@ -143,15 +143,13 @@ fun ScreenBodyClima(modifier: Modifier, clima: WeatherResponse?, mvvm: ViewModel
 
 @Composable
 fun direccionVientoFlecha(degrees: Float) {
-    val arrowImage = painterResource(R.drawable.flecha)
-
     Box(
         modifier = Modifier
             .size(24.dp)
             .rotate(degrees)
     ) {
         Image(
-            painter = arrowImage,
+            painter = painterResource(R.drawable.flecha),
             contentDescription = null,
             modifier = Modifier.fillMaxSize()
         )
