@@ -34,6 +34,8 @@ import com.example.weatherapp.R
 import com.example.weatherapp.data.ForecastResponse
 import com.example.weatherapp.data.WeatherResponse
 import com.example.weatherapp.models.ViewModel
+import java.math.BigDecimal
+import java.math.RoundingMode
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
@@ -79,16 +81,26 @@ fun WeatherScreen(navController: NavController, mvvm: ViewModel) {
             )
         }
     ) { paddingValues ->
-        ScreenBodyClima(modifier = Modifier.padding(paddingValues), clima = clima, pronostico = pronostico, mvvm = mvvm)
+        ScreenBodyClima(
+            modifier = Modifier.padding(paddingValues),
+            clima = clima,
+            pronostico = pronostico,
+            mvvm = mvvm
+        )
     }
 }
 
 @Composable
-fun ScreenBodyClima(modifier: Modifier, clima: WeatherResponse?, pronostico: ForecastResponse?, mvvm: ViewModel) {
+fun ScreenBodyClima(
+    modifier: Modifier,
+    clima: WeatherResponse?,
+    pronostico: ForecastResponse?,
+    mvvm: ViewModel
+) {
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(Color(0xFF87CEEB))
+            .background(Color(0xFFA7F5FF))
             .padding(16.dp)
             .verticalScroll(rememberScrollState())
     ) {
@@ -100,11 +112,11 @@ fun ScreenBodyClima(modifier: Modifier, clima: WeatherResponse?, pronostico: For
                 Image(
                     painter = rememberImagePainter(data = "https://openweathermap.org/img/w/${clima.weather[0].icon}.png"),
                     contentDescription = "Icono del clima",
-                    modifier = Modifier.size(150.dp)
+                    modifier = Modifier.size(100.dp)
                 )
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
-                    text = "${clima.main.temp}ºC",
+                    text = "${clima.main.temp.redondear()}ºC",
                     fontSize = 48.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color.White
@@ -116,76 +128,145 @@ fun ScreenBodyClima(modifier: Modifier, clima: WeatherResponse?, pronostico: For
                     color = Color.White
                 )
                 Spacer(modifier = Modifier.height(24.dp))
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier.fillMaxWidth()
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceEvenly
                 ) {
-                    Text(
-                        text = "Sensación térmica: ${clima?.main?.feels_like}ºC",
-                        fontSize = 18.sp,
-                        color = Color.White,
-                        modifier = Modifier.padding(vertical = 4.dp)
-                    )
-                    Text(
-                        text = "Velocidad del viento: ${(clima.wind.speed * 3.6).roundToInt()} km/h",
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White
-                    )
-                    Text(
-                        text = "Dirección del viento",
-                        fontSize = 18.sp,
-                        color = Color.White
-                    )
-                    direccionVientoFlecha(degrees = clima.wind.deg)
+                    VientoCard(clima.wind.speed, clima.wind.deg)
+                    HumedadCard(clima.main.humidity)
                 }
                 Spacer(modifier = Modifier.height(24.dp))
 
                 pronostico?.forecastday?.let { forecastDays ->
-                    if (forecastDays != null) {
+                    if (forecastDays.isNotEmpty()) {
+                        Text(
+                            text = "Pronóstico",
+                            fontSize = 24.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White,
+                            modifier = Modifier.padding(bottom = 8.dp)
+                        )
                         LazyRow {
-                            items(forecastDays) { forecastDay ->
-                                Card(
-                                    modifier = Modifier.padding(4.dp),
-                                    shape = RoundedCornerShape(8.dp)
-                                ) {
-                                    Column(
-                                        horizontalAlignment = Alignment.CenterHorizontally,
-                                        modifier = Modifier.padding(16.dp)
-                                    ) {
-                                        Text(
-                                            text = forecastDay.date,
-                                            fontSize = 18.sp,
-                                            fontWeight = FontWeight.Bold,
-                                            color = Color.Black
-                                        )
-                                        Spacer(modifier = Modifier.height(8.dp))
-                                        Image(
-                                            painter = rememberImagePainter(data = forecastDay.day.condition.icon),
-                                            contentDescription = "Icono del clima",
-                                            modifier = Modifier.size(50.dp)
-                                        )
-                                        Spacer(modifier = Modifier.height(8.dp))
-                                        Text(
-                                            text = "Max: ${forecastDay.day.maxtempC}ºC",
-                                            fontSize = 16.sp,
-                                            color = Color.Black
-                                        )
-                                        Text(
-                                            text = "Min: ${forecastDay.day.mintempC}ºC",
-                                            fontSize = 16.sp,
-                                            color = Color.Black
-                                        )
-                                    }
-                                }
+                            items(forecastDays.take(3)) { forecastDay ->
+                                DiaCard(forecastDay)
                             }
                         }
+                    } else {
+                        Text(
+                            text = "No hay información de pronóstico disponible",
+                            color = Color.Black
+                        )
                     }
                 }
             }
         }
     }
 }
+
+@Composable
+fun VientoCard(velocidad: Float, grados: Float) {
+    Card(
+        modifier = Modifier
+            .padding(4.dp)
+            .width(100.dp)
+            .height(200.dp),
+        shape = RoundedCornerShape(8.dp)
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.padding(16.dp)
+        ) {
+            Text(
+                text = "Velocidad del viento",
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.Black
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            direccionVientoFlecha(degrees = grados)
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = "${velocidad.redondear()} km/h",
+                fontSize = 16.sp,
+                color = Color.Black
+            )
+        }
+    }
+}
+
+@Composable
+fun HumedadCard(humedad: Int) {
+    Card(
+        modifier = Modifier
+            .padding(4.dp)
+            .width(100.dp)
+            .height(200.dp),
+        shape = RoundedCornerShape(8.dp)
+    ) {
+        Text(
+            text = "Humedad",
+            fontSize = 16.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color.Black
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        Image(
+            painter = rememberImagePainter(data = "https://openweathermap.org/img/wn/09d.png"),
+            contentDescription = "Icono de humedad",
+            modifier = Modifier.size(50.dp)
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            text = "$humedad%",
+            fontSize = 16.sp,
+            color = Color.Black
+        )
+    }
+}
+
+
+@Composable
+fun DiaCard(pronostico: ForecastResponse.ForecastDay) {
+    Card(
+        modifier = Modifier.padding(4.dp),
+        shape = RoundedCornerShape(8.dp)
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.padding(16.dp)
+        ) {
+            Text(
+                text = pronostico.date,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.Black
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Image(
+                painter = rememberImagePainter(data = pronostico.day.condition.icon),
+                contentDescription = "Icono del clima",
+                modifier = Modifier.size(50.dp)
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = "Max: ${pronostico.day.maxtempC}ºC",
+                fontSize = 14.sp,
+                color = Color.Black
+            )
+            Text(
+                text = "Min: ${pronostico.day.mintempC}ºC",
+                fontSize = 14.sp,
+                color = Color.Black
+            )
+        }
+    }
+}
+
+fun Float.redondear(): Float {
+    return BigDecimal(this.toDouble()).setScale(1, RoundingMode.HALF_EVEN).toFloat()
+}
+
 
 @Composable
 fun direccionVientoFlecha(degrees: Float) {
