@@ -5,7 +5,9 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
@@ -29,6 +31,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil.compose.rememberImagePainter
 import com.example.weatherapp.R
+import com.example.weatherapp.data.ForecastResponse
 import com.example.weatherapp.data.WeatherResponse
 import com.example.weatherapp.models.ViewModel
 import java.text.SimpleDateFormat
@@ -76,12 +79,12 @@ fun WeatherScreen(navController: NavController, mvvm: ViewModel) {
             )
         }
     ) { paddingValues ->
-        ScreenBodyClima(modifier = Modifier.padding(paddingValues), clima = clima, mvvm = mvvm)
+        ScreenBodyClima(modifier = Modifier.padding(paddingValues), clima = clima, pronostico = pronostico, mvvm = mvvm)
     }
 }
 
 @Composable
-fun ScreenBodyClima(modifier: Modifier, clima: WeatherResponse?, mvvm: ViewModel) {
+fun ScreenBodyClima(modifier: Modifier, clima: WeatherResponse?, pronostico: ForecastResponse?, mvvm: ViewModel) {
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -135,6 +138,49 @@ fun ScreenBodyClima(modifier: Modifier, clima: WeatherResponse?, mvvm: ViewModel
                         color = Color.White
                     )
                     direccionVientoFlecha(degrees = clima.wind.deg)
+                }
+                Spacer(modifier = Modifier.height(24.dp))
+                // Aquí agregamos el LazyRow para el pronóstico
+                pronostico?.forecastday?.let { forecastDays ->
+                    if (forecastDays != null) {
+                        LazyRow {
+                            items(forecastDays) { forecastDay ->
+                                Card(
+                                    modifier = Modifier.padding(4.dp),
+                                    shape = RoundedCornerShape(8.dp)
+                                ) {
+                                    Column(
+                                        horizontalAlignment = Alignment.CenterHorizontally,
+                                        modifier = Modifier.padding(16.dp)
+                                    ) {
+                                        Text(
+                                            text = forecastDay.date,
+                                            fontSize = 18.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = Color.Black
+                                        )
+                                        Spacer(modifier = Modifier.height(8.dp))
+                                        Image(
+                                            painter = rememberImagePainter(data = forecastDay.day.condition.icon),
+                                            contentDescription = "Icono del clima",
+                                            modifier = Modifier.size(50.dp)
+                                        )
+                                        Spacer(modifier = Modifier.height(8.dp))
+                                        Text(
+                                            text = "Max: ${forecastDay.day.maxtempC}ºC",
+                                            fontSize = 16.sp,
+                                            color = Color.Black
+                                        )
+                                        Text(
+                                            text = "Min: ${forecastDay.day.mintempC}ºC",
+                                            fontSize = 16.sp,
+                                            color = Color.Black
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }

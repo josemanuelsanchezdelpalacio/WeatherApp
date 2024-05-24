@@ -40,7 +40,6 @@ class ViewModel(application: Application) : AndroidViewModel(application) {
         obtenerUbicacionActual()
     }
 
-    //intento obtener la ubicacion real
     fun obtenerUbicacionActual() {
         val fusedLocationClient = LocationServices.getFusedLocationProviderClient(getApplication<Application>().applicationContext)
 
@@ -59,8 +58,10 @@ class ViewModel(application: Application) : AndroidViewModel(application) {
             if (location != null) {
                 obtenerClimaPorUbicacion(location.latitude, location.longitude)
             } else {
+                // Manejo de la situación cuando no se puede obtener la ubicación
             }
         }.addOnFailureListener { exception ->
+            // Manejo de la excepción
         }
     }
 
@@ -70,7 +71,10 @@ class ViewModel(application: Application) : AndroidViewModel(application) {
                 val respuesta = RetrofitInstance.api.obtenerClimaActual(ciudad, "4e8c5c3d428b37ea7efd0a54096c1fd8")
                 _clima.value = respuesta
                 _nombreCiudad.value = respuesta.name
-            } catch (e: Exception) {}
+                obtenerPronosticoPorCiudad(ciudad)
+            } catch (e: Exception) {
+                // Manejo de la excepción
+            }
         }
     }
 
@@ -80,7 +84,33 @@ class ViewModel(application: Application) : AndroidViewModel(application) {
                 val respuestaClima = RetrofitInstance.api.obtenerClimaActualPorCoordenadas(lat, lon, "4e8c5c3d428b37ea7efd0a54096c1fd8")
                 _clima.value = respuestaClima
                 _nombreCiudad.value = respuestaClima.name
-            } catch (e: Exception) {}
+                obtenerPronosticoPorUbicacion(lat, lon)
+            } catch (e: Exception) {
+                // Manejo de la excepción
+            }
+        }
+    }
+
+    private fun obtenerPronosticoPorCiudad(ciudad: String) {
+        viewModelScope.launch {
+            try {
+                val respuestaPronostico = RetrofitInstance.api.obtenerPronosticoPorCiudad(ciudad, "4e8c5c3d428b37ea7efd0a54096c1fd8")
+                _pronostico.value = respuestaPronostico
+            } catch (e: Exception) {
+                // Manejo de la excepción
+            }
+        }
+    }
+
+    private fun obtenerPronosticoPorUbicacion(lat: Double, lon: Double) {
+        viewModelScope.launch {
+            try {
+                val respuestaPronostico = RetrofitInstance.api.obtenerPronosticoPorCoordenadas(lat, lon, "4e8c5c3d428b37ea7efd0a54096c1fd8")
+                _pronostico.value = respuestaPronostico
+            } catch (e: Exception) {
+                // Manejo de la excepción
+            }
         }
     }
 }
+

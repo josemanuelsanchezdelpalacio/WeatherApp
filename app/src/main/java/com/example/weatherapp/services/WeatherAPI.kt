@@ -1,5 +1,6 @@
 package com.example.weatherapp.services
 
+import com.example.weatherapp.data.ForecastResponse
 import com.example.weatherapp.data.WeatherResponse
 import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
 import kotlinx.serialization.json.Json
@@ -28,6 +29,19 @@ interface WeatherAPI {
         @Query("units") unidades: String = "metric",
         @Query("lang") idioma: String = "es"
     ): WeatherResponse
+
+    @GET("forecast")
+    suspend fun obtenerPronosticoPorCiudad(
+        @Query("q") ciudad: String,
+        @Query("appid") apiKey: String
+    ): ForecastResponse
+
+    @GET("forecast")
+    suspend fun obtenerPronosticoPorCoordenadas(
+        @Query("lat") lat: Double,
+        @Query("lon") lon: Double,
+        @Query("appid") apiKey: String
+    ): ForecastResponse
 }
 
 object RetrofitInstance {
