@@ -140,7 +140,7 @@ fun ScreenBodyClima(modifier: Modifier, clima: WeatherResponse?, pronostico: For
                     direccionVientoFlecha(degrees = clima.wind.deg)
                 }
                 Spacer(modifier = Modifier.height(24.dp))
-                // Aquí agregamos el LazyRow para el pronóstico
+
                 pronostico?.forecastday?.let { forecastDays ->
                     if (forecastDays != null) {
                         LazyRow {
