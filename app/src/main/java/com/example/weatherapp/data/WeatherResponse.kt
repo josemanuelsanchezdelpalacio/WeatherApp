@@ -9,7 +9,8 @@ data class WeatherResponse(
     val main: Principal,
     val name: String,
     val wind: Viento,
-    val rain: Lluvia?
+    val rain: Lluvia?,
+    val forecast: ForecastResponse?
 )
 
 data class Coordenadas(
@@ -27,7 +28,8 @@ data class Principal(
     val feels_like: Float,
     val temp_min: Float,
     val temp_max: Float,
-    val humidity: Int
+    val humidity: Int,
+    val precipitation: Float
 )
 
 data class Viento(

@@ -2,16 +2,13 @@ package com.example.weatherapp.services
 
 import com.example.weatherapp.data.ForecastResponse
 import com.example.weatherapp.data.WeatherResponse
-import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
-import kotlinx.serialization.json.Json
-import okhttp3.MediaType.Companion.toMediaType
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.GET
 import retrofit2.http.Query
 
 interface WeatherAPI {
-    //obtengo info del clima de la ciudad
+    // Obtengo info del clima de la ciudad
     @GET("weather")
     suspend fun obtenerClimaActual(
         @Query("q") ciudad: String,
@@ -20,7 +17,7 @@ interface WeatherAPI {
         @Query("lang") idioma: String = "es"
     ): WeatherResponse
 
-    //obtengo el clima segun las coordenadas
+    // Obtengo el clima según las coordenadas
     @GET("weather")
     suspend fun obtenerClimaActualPorCoordenadas(
         @Query("lat") latitud: Double,
@@ -30,17 +27,25 @@ interface WeatherAPI {
         @Query("lang") idioma: String = "es"
     ): WeatherResponse
 
-    @GET("forecast")
+    // Obtengo el pronóstico por ciudad
+    @GET("forecast/daily")
     suspend fun obtenerPronosticoPorCiudad(
         @Query("q") ciudad: String,
-        @Query("appid") apiKey: String
+        @Query("appid") apiKey: String,
+        @Query("units") unidades: String = "metric",
+        @Query("lang") idioma: String = "es",
+        @Query("cnt") dias: Int = 7  // Número de días para el pronóstico
     ): ForecastResponse
 
-    @GET("forecast")
+    // Obtengo el pronóstico por coordenadas
+    @GET("forecast/daily")
     suspend fun obtenerPronosticoPorCoordenadas(
         @Query("lat") lat: Double,
         @Query("lon") lon: Double,
-        @Query("appid") apiKey: String
+        @Query("appid") apiKey: String,
+        @Query("units") unidades: String = "metric",
+        @Query("lang") idioma: String = "es",
+        @Query("cnt") dias: Int = 7  // Número de días para el pronóstico
     ): ForecastResponse
 }
 
