@@ -4,7 +4,6 @@ import com.google.gson.annotations.SerializedName
 import java.util.concurrent.locks.Condition
 
 /**para representar la informacion del pronostico segun el dia**/
-// Clase ForecastResponse
 data class ForecastResponse(
     val forecastday: List<ForecastDay>
 ) {
