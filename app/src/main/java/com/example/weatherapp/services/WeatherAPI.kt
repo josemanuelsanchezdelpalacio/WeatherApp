@@ -1,5 +1,6 @@
 package com.example.weatherapp.services
 
+import android.telecom.Call
 import com.example.weatherapp.data.ForecastResponse
 import com.example.weatherapp.data.WeatherResponse
 import retrofit2.Retrofit
@@ -27,25 +28,23 @@ interface WeatherAPI {
         @Query("lang") idioma: String = "es"
     ): WeatherResponse
 
-    // Obtengo el pronóstico por ciudad
-    @GET("forecast/daily")
+    // Obtengo el pronóstico del clima según la ciudad
+    @GET("forecast")
     suspend fun obtenerPronosticoPorCiudad(
         @Query("q") ciudad: String,
-        @Query("appid") apiKey: String,
+        @Query("appid") ID_API: String,
         @Query("units") unidades: String = "metric",
-        @Query("lang") idioma: String = "es",
-        @Query("cnt") dias: Int = 7  // Número de días para el pronóstico
+        @Query("lang") idioma: String = "es"
     ): ForecastResponse
 
-    // Obtengo el pronóstico por coordenadas
-    @GET("forecast/daily")
+    // Obtengo el pronóstico del clima según las coordenadas
+    @GET("forecast")
     suspend fun obtenerPronosticoPorCoordenadas(
-        @Query("lat") lat: Double,
-        @Query("lon") lon: Double,
-        @Query("appid") apiKey: String,
+        @Query("lat") latitud: Double,
+        @Query("lon") longitud: Double,
+        @Query("appid") ID_API: String,
         @Query("units") unidades: String = "metric",
-        @Query("lang") idioma: String = "es",
-        @Query("cnt") dias: Int = 7  // Número de días para el pronóstico
+        @Query("lang") idioma: String = "es"
     ): ForecastResponse
 }
 

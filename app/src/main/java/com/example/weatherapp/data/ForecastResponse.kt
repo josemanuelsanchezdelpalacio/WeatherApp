@@ -1,8 +1,5 @@
 package com.example.weatherapp.data
 
-import com.google.gson.annotations.SerializedName
-import java.util.concurrent.locks.Condition
-
 /**para representar la informacion del pronostico segun el dia**/
 data class ForecastResponse(
     val forecastday: List<ForecastDay>

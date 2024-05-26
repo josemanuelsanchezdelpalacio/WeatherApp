@@ -24,6 +24,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
@@ -37,6 +38,7 @@ import com.example.weatherapp.R
 import com.example.weatherapp.data.ForecastResponse
 import com.example.weatherapp.data.WeatherResponse
 import com.example.weatherapp.models.ViewModel
+import com.example.weatherapp.services.WeatherAPI
 import java.math.BigDecimal
 import java.math.RoundingMode
 import java.text.SimpleDateFormat
@@ -85,12 +87,22 @@ fun WeatherScreen(navController: NavController, mvvm: ViewModel) {
             )
         }
     ) { paddingValues ->
-        ScreenBodyClima(modifier = Modifier.padding(paddingValues), clima = clima, pronostico = pronostico, mvvm = mvvm)
+        ScreenBodyClima(
+            modifier = Modifier.padding(paddingValues),
+            clima = clima,
+            pronostico = pronostico,
+            mvvm = mvvm
+        )
     }
 }
 
 @Composable
-fun ScreenBodyClima(modifier: Modifier, clima: WeatherResponse?, pronostico: ForecastResponse?, mvvm: ViewModel) {
+fun ScreenBodyClima(
+    modifier: Modifier,
+    clima: WeatherResponse?,
+    pronostico: ForecastResponse?,
+    mvvm: ViewModel
+) {
     val gradiente = Brush.verticalGradient(
         colors = listOf(Color(0xFF040569), Color(0xFF141E74), Color(0xFF1C2C99)),
         startY = 0.0f,
@@ -115,8 +127,7 @@ fun ScreenBodyClima(modifier: Modifier, clima: WeatherResponse?, pronostico: For
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth()
                     ) {
                         Column(
                             modifier = Modifier.align(Alignment.CenterStart)
@@ -169,7 +180,7 @@ fun ScreenBodyClima(modifier: Modifier, clima: WeatherResponse?, pronostico: For
                             )
                             Spacer(modifier = Modifier.height(8.dp))
                             Text(
-                                text = clima.weather[0].description.capitalize(),
+                                text = clima.weather[0].description.replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() },
                                 fontSize = 16.sp,
                                 color = Color.White,
                                 textAlign = TextAlign.Center
@@ -185,6 +196,7 @@ fun ScreenBodyClima(modifier: Modifier, clima: WeatherResponse?, pronostico: For
                     horizontalAlignment = Alignment.CenterHorizontally,
                     modifier = Modifier.fillMaxWidth()
                 ) {
+                    Spacer(modifier = Modifier.height(16.dp))
                     Text(
                         text = "Pronóstico",
                         fontSize = 24.sp,
@@ -194,7 +206,12 @@ fun ScreenBodyClima(modifier: Modifier, clima: WeatherResponse?, pronostico: For
                     )
                     LazyRow {
                         items(forecastDays) { forecastDay ->
-                            DiaCard(forecastDay)
+                            ForecastComponent(
+                                date = forecastDay.date,
+                                icon = forecastDay.day.condition.icon,
+                                minTemp = "${forecastDay.day.mintempC}ºC",
+                                maxTemp = "${forecastDay.day.maxtempC}ºC"
+                            )
                         }
                     }
                 }
@@ -203,46 +220,62 @@ fun ScreenBodyClima(modifier: Modifier, clima: WeatherResponse?, pronostico: For
     }
 }
 
+fun String.toFormattedDay(): String {
+    return try {
+        val inputFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+        val outputFormat = SimpleDateFormat("EEEE, d MMM", Locale.getDefault())
+        val date = inputFormat.parse(this)
+        outputFormat.format(date ?: return this)
+    } catch (e: Exception) {
+        this
+    }
+}
+
 @Composable
-fun DiaCard(pronostico: ForecastResponse.ForecastDay) {
-    Card(
-        modifier = Modifier.padding(4.dp),
-        shape = RoundedCornerShape(8.dp)
+fun ForecastComponent(modifier: Modifier = Modifier, date: String, icon: String, minTemp: String, maxTemp: String) {
+    ElevatedCard(
+        modifier = modifier.padding(end = 16.dp),
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = 6.dp
+        ),
     ) {
         Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 8.dp, horizontal = 4.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.padding(16.dp)
+            verticalArrangement = Arrangement.Center,
         ) {
             Text(
-                text = pronostico.date,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color.Black
+                modifier = Modifier.padding(start = 4.dp, end = 4.dp),
+                text = date.toFormattedDay(),
+                style = MaterialTheme.typography.titleMedium
             )
-            Spacer(modifier = Modifier.height(8.dp))
             Image(
-                painter = rememberImagePainter(data = "https:${pronostico.day.condition.icon}"),
-                contentDescription = "Icono del clima",
-                modifier = Modifier.size(50.dp)
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = "Max: ${pronostico.day.maxtempC}ºC",
-                fontSize = 14.sp,
-                color = Color.Black
+                painter = rememberImagePainter(data = "https://openweathermap.org/img/w/$icon.png"),
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.size(42.dp)
             )
             Text(
-                text = "Min: ${pronostico.day.mintempC}ºC",
-                fontSize = 14.sp,
-                color = Color.Black
+                text = maxTemp,
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Bold,
+            )
+            Spacer(Modifier.width(4.dp))
+            Text(
+                text = minTemp,
+                style = MaterialTheme.typography.bodySmall
             )
         }
     }
 }
 
+
 @Composable
 fun direccionVientoFlecha(degrees: Float) {
-    Box(modifier = Modifier
+    Box(
+        modifier = Modifier
             .size(24.dp)
             .rotate(degrees)
     ) {
@@ -253,3 +286,4 @@ fun direccionVientoFlecha(degrees: Float) {
         )
     }
 }
+

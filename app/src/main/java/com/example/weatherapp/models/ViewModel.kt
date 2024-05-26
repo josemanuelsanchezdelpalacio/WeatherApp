@@ -82,6 +82,17 @@ class ViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    fun obtenerPronosticoPorCiudad(ciudad: String) {
+        viewModelScope.launch {
+            try {
+                val forecastResponse = RetrofitInstance.api.obtenerPronosticoPorCiudad(ciudad, "4e8c5c3d428b37ea7efd0a54096c1fd8")
+                _pronostico.value = forecastResponse
+            } catch (e: Exception) {
+                // Manejar errores
+            }
+        }
+    }
+
     private fun obtenerPronosticoPorUbicacion(lat: Double, lon: Double) {
         viewModelScope.launch {
             try {
@@ -93,4 +104,3 @@ class ViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 }
-

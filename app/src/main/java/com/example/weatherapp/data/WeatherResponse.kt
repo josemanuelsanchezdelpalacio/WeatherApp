@@ -39,5 +39,5 @@ data class Viento(
 
 /** Representa la información sobre las precipitaciones de la última hora. */
 data class Lluvia(
-    @SerializedName("1h") val unaHora: Float?,
+    @SerializedName("1h") val unaHora: Float?
 )
