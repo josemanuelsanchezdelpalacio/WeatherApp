@@ -29,9 +29,11 @@ class ViewModel(application: Application) : AndroidViewModel(application) {
         obtenerUbicacionActual()
     }
 
+    /**para obtener la ubicacion actual**/
     fun obtenerUbicacionActual() {
-        val fusedLocationClient = LocationServices.getFusedLocationProviderClient(getApplication<Application>().applicationContext)
+        val ubicacion = LocationServices.getFusedLocationProviderClient(getApplication<Application>().applicationContext)
 
+        //compruebo los permisos para la ubicacion
         if (ActivityCompat.checkSelfPermission(
                 getApplication(),
                 Manifest.permission.ACCESS_FINE_LOCATION
@@ -39,68 +41,41 @@ class ViewModel(application: Application) : AndroidViewModel(application) {
                 getApplication(),
                 Manifest.permission.ACCESS_COARSE_LOCATION
             ) != PackageManager.PERMISSION_GRANTED
-        ) {
-            return
-        }
+        ) { return }
 
-        fusedLocationClient.lastLocation.addOnSuccessListener { location ->
+        //obtengo la ubicacion por la longitud y latitud
+        ubicacion.lastLocation.addOnSuccessListener { location ->
             if (location != null) {
                 obtenerClimaPorUbicacion(location.latitude, location.longitude)
-            } else {
-                // Manejo de la situación cuando no se puede obtener la ubicación
             }
-        }.addOnFailureListener { exception ->
-            // Manejo de la excepción
-        }
+        }.addOnFailureListener {}
     }
 
+    /**para obtener el clima de la ciudad buscandola por el nombre y el pronostico de los siguientes dias**/
     fun obtenerClimaPorCiudad(ciudad: String) {
         viewModelScope.launch {
             try {
-                val response = RetrofitInstance.api.obtenerClimaActual(ciudad, "4e8c5c3d428b37ea7efd0a54096c1fd8")
-                _clima.value = response
+                val respuestaClima = RetrofitInstance.api.obtenerClimaActual(ciudad, "4e8c5c3d428b37ea7efd0a54096c1fd8")
+                _clima.value = respuestaClima
                 _nombreCiudad.value = ciudad
 
-                val forecastResponse = RetrofitInstance.api.obtenerPronosticoPorCiudad(ciudad, "4e8c5c3d428b37ea7efd0a54096c1fd8")
-                _pronostico.value = forecastResponse
-            } catch (e: Exception) {
-                // Manejar errores
-            }
+                val respuestaPronostico = RetrofitInstance.api.obtenerPronosticoPorCiudad(ciudad, "4e8c5c3d428b37ea7efd0a54096c1fd8")
+                _pronostico.value = respuestaPronostico
+            } catch (e: Exception) { }
         }
     }
 
+    /**para obtener el clima de la ciudad de la ubicacion actual del usuario y el pronostico de los siguientes dias**/
     fun obtenerClimaPorUbicacion(lat: Double, lon: Double) {
         viewModelScope.launch {
             try {
                 val respuestaClima = RetrofitInstance.api.obtenerClimaActualPorCoordenadas(lat, lon, "4e8c5c3d428b37ea7efd0a54096c1fd8")
                 _clima.value = respuestaClima
                 _nombreCiudad.value = respuestaClima.name
-                obtenerPronosticoPorUbicacion(lat, lon)
-            } catch (e: Exception) {
-                // Manejo de la excepción
-            }
-        }
-    }
 
-    fun obtenerPronosticoPorCiudad(ciudad: String) {
-        viewModelScope.launch {
-            try {
-                val forecastResponse = RetrofitInstance.api.obtenerPronosticoPorCiudad(ciudad, "4e8c5c3d428b37ea7efd0a54096c1fd8")
-                _pronostico.value = forecastResponse
-            } catch (e: Exception) {
-                // Manejar errores
-            }
-        }
-    }
-
-    private fun obtenerPronosticoPorUbicacion(lat: Double, lon: Double) {
-        viewModelScope.launch {
-            try {
                 val respuestaPronostico = RetrofitInstance.api.obtenerPronosticoPorCoordenadas(lat, lon, "4e8c5c3d428b37ea7efd0a54096c1fd8")
                 _pronostico.value = respuestaPronostico
-            } catch (e: Exception) {
-                // Manejo de la excepción
-            }
+            } catch (e: Exception) {}
         }
     }
 }

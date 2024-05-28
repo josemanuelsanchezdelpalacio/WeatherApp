@@ -1,6 +1,5 @@
 package com.example.weatherapp.services
 
-import android.telecom.Call
 import com.example.weatherapp.data.ForecastResponse
 import com.example.weatherapp.data.WeatherResponse
 import retrofit2.Retrofit
