@@ -55,13 +55,23 @@ fun WeatherScreen(navController: NavController, mvvm: ViewModel) {
     val pronostico by mvvm.pronostico.collectAsState()
     val nombreCiudad by mvvm.nombreCiudad.collectAsState()
 
+    val context = LocalContext.current
+
+    mvvm.obtenerClimaActual(context)
+
     Scaffold(
         topBar = {
             var busqueda by remember { mutableStateOf(false) }
             var ciudad by remember { mutableStateOf("") }
 
             TopAppBar(
-                title = { Text(text = nombreCiudad, maxLines = 1, overflow = TextOverflow.Ellipsis) },
+                title = {
+                    Text(
+                        text = nombreCiudad,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                },
                 colors = TopAppBarDefaults.smallTopAppBarColors(containerColor = Color.Transparent),
                 actions = {
                     //cuando se pulsa el icono de la lupa sale un textfield para buscar la ciudad
@@ -88,7 +98,12 @@ fun WeatherScreen(navController: NavController, mvvm: ViewModel) {
             )
         }
     ) { paddingValues ->
-        ScreenBodyClima(modifier = Modifier.padding(paddingValues), clima = clima, pronostico = pronostico, mvvm = mvvm)
+        ScreenBodyClima(
+            modifier = Modifier.padding(paddingValues),
+            clima = clima,
+            pronostico = pronostico,
+            mvvm = mvvm
+        )
     }
 }
 
@@ -101,14 +116,16 @@ fun ScreenBodyClima(modifier: Modifier, clima: WeatherResponse?, pronostico: For
         endY = 1000.0f
     )
 
-    Box(
+    Column(
         modifier = modifier
             .fillMaxSize()
             .background(brush = gradiente)
             .padding(16.dp)
             .verticalScroll(rememberScrollState())
     ) {
+        Spacer(modifier = Modifier.height(50.dp))
         cajaClima(clima)
+        Spacer(modifier = Modifier.height(50.dp))
         cajaPronostico(pronostico)
     }
 }
@@ -123,119 +140,127 @@ fun cajaClima(clima: WeatherResponse?) {
                 .padding(16.dp)
         ) {
             Column(
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .align(Alignment.CenterStart)
             ) {
-                Box(
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Column(
-                        modifier = Modifier.align(Alignment.CenterStart)
-                    ) {
-                        Text(
-                            text = "${clima.main.temp.toInt()}ºC",
-                            fontSize = 48.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.White
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Row {
-                            Text(
-                                text = "Max: ${clima.main.temp_max.toInt()}ºC",
-                                fontSize = 14.sp,
-                                color = Color.White
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(
-                                text = "Min: ${clima.main.temp_min.toInt()}ºC",
-                                fontSize = 14.sp,
-                                color = Color.White
-                            )
-                        }
-                        Spacer(modifier = Modifier.height(24.dp))
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(
-                                text = "Viento: ${clima.wind.speed} km/h",
-                                fontSize = 16.sp,
-                                color = Color.White
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            direccionVientoFlecha(clima.wind.deg)
-                        }
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = "Humedad: ${clima.main.humidity}%",
-                            fontSize = 16.sp,
-                            color = Color.White
-                        )
-                    }
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier.align(Alignment.TopEnd)
-                    ) {
-                        Image(
-                            painter = rememberImagePainter(data = "https://openweathermap.org/img/w/${clima.weather[0].icon}.png"),
-                            contentDescription = "Icono del clima",
-                            modifier = Modifier.size(48.dp)
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = clima.weather[0].description.replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() },
-                            fontSize = 16.sp,
-                            color = Color.White,
-                            textAlign = TextAlign.Center
-                        )
-                    }
+                Text(
+                    text = "${clima.main.temp.toInt()}ºC",
+                    fontSize = 48.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Row {
+                    Text(
+                        text = "Max: ${clima.main.temp_max.toInt()}ºC",
+                        fontSize = 14.sp,
+                        color = Color.White
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "Min: ${clima.main.temp_min.toInt()}ºC",
+                        fontSize = 14.sp,
+                        color = Color.White
+                    )
                 }
+                Spacer(modifier = Modifier.height(24.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = "Viento: ${clima.wind.speed} km/h",
+                        fontSize = 16.sp,
+                        color = Color.White
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    direccionVientoFlecha(clima.wind.deg)
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "Humedad: ${clima.main.humidity}%",
+                    fontSize = 16.sp,
+                    color = Color.White
+                )
+            }
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.align(Alignment.TopEnd)
+            ) {
+                Image(
+                    painter = rememberImagePainter(data = "https://openweathermap.org/img/w/${clima.weather[0].icon}.png"),
+                    contentDescription = "Icono del clima",
+                    modifier = Modifier.size(48.dp)
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = clima.weather[0].description.replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() },
+                    fontSize = 16.sp,
+                    color = Color.White,
+                    textAlign = TextAlign.Center
+                )
             }
         }
     }
 }
 
+
 @Composable
 fun cajaPronostico(pronostico: ForecastResponse?) {
     pronostico?.forecastday?.let { forecastDays ->
-        if (forecastDays.isNotEmpty()) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(Color.White.copy(alpha = 0.5f))
+                .padding(16.dp)
+        ) {
             Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .align(Alignment.CenterStart)
             ) {
-                Spacer(modifier = Modifier.height(16.dp))
-                Text(
-                    text = "Pronóstico",
-                    fontSize = 24.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White,
-                    modifier = Modifier.padding(bottom = 8.dp)
-                )
-                LazyRow {
-                    items(forecastDays) { forecastDay ->
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            modifier = Modifier.padding(16.dp)
-                        ) {
-                            Text(
-                                text = forecastDay.date,
-                                fontSize = 16.sp,
-                                color = Color.White
-                            )
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Image(
-                                painter = rememberImagePainter(data = "https://openweathermap.org/img/w/${forecastDay.day.condition.icon}.png"),
-                                contentDescription = "Icono del clima",
-                                modifier = Modifier.size(48.dp)
-                            )
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text(
-                                text = "Max: ${forecastDay.day.maxtempC}ºC",
-                                fontSize = 14.sp,
-                                color = Color.White
-                            )
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text(
-                                text = "Min: ${forecastDay.day.mintempC}ºC",
-                                fontSize = 14.sp,
-                                color = Color.White
-                            )
+                if (forecastDays.isNotEmpty()) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(
+                            text = "Pronóstico",
+                            fontSize = 24.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White,
+                            modifier = Modifier.padding(bottom = 8.dp)
+                        )
+                        LazyRow {
+                            items(forecastDays) { forecastDay ->
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    modifier = Modifier.padding(16.dp)
+                                ) {
+                                    Text(
+                                        text = forecastDay.date,
+                                        fontSize = 16.sp,
+                                        color = Color.White
+                                    )
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    Image(
+                                        painter = rememberImagePainter(data = "https://openweathermap.org/img/w/${forecastDay.condition.firstOrNull()?.icon}.png"),
+                                        contentDescription = "Icono del clima",
+                                        modifier = Modifier.size(48.dp)
+                                    )
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    Text(
+                                        text = "Max: ${forecastDay.day.maxtempC}ºC",
+                                        fontSize = 14.sp,
+                                        color = Color.White
+                                    )
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    Text(
+                                        text = "Min: ${forecastDay.day.mintempC}ºC",
+                                        fontSize = 14.sp,
+                                        color = Color.White
+                                    )
+                                }
+                            }
                         }
                     }
                 }
