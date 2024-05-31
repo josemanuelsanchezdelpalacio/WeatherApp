@@ -50,7 +50,7 @@ import kotlin.math.sin
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun WeatherScreen(navController: NavController, mvvm: ViewModel) {
+fun WeatherScreen(navController: NavController, mvvm: ViewModel, ciudadParam: String) {
     val clima by mvvm.clima.collectAsState()
     val pronostico by mvvm.pronostico.collectAsState()
     val nombreCiudad by mvvm.nombreCiudad.collectAsState()
@@ -98,12 +98,7 @@ fun WeatherScreen(navController: NavController, mvvm: ViewModel) {
             )
         }
     ) { paddingValues ->
-        ScreenBodyClima(
-            modifier = Modifier.padding(paddingValues),
-            clima = clima,
-            pronostico = pronostico,
-            mvvm = mvvm
-        )
+        ScreenBodyClima(modifier = Modifier.padding(paddingValues), clima = clima, pronostico = pronostico, mvvm = mvvm)
     }
 }
 
