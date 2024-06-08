@@ -17,9 +17,7 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.rememberNavController
-import com.example.weatherapp.models.ViewModel
-import com.example.weatherapp.navigation.appNavigation
-import com.example.weatherapp.screens.WeatherScreen
+import com.dam2jms.weatherapp.navigation.appNavigation
 import com.example.weatherapp.ui.theme.WeatherAppTheme
 
 class MainActivity : ComponentActivity() {
